@@ -50,6 +50,8 @@ const current = () => S.queue[S.index] || null;
 /* ---------- inicialização ---------- */
 async function boot() {
   $('#origin-hint').textContent = location.origin;
+  // Com Client ID fixo no código não faz sentido oferecer a troca.
+  if (CONFIG.GOOGLE_CLIENT_ID) $$('[data-action="change-client"]').forEach((el) => { el.hidden = true; });
   injectTemplates();
   bindEvents();
 

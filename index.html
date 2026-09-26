@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <!--
     BEM-VINDO A BORDO MARUJO!
                .
@@ -18,134 +18,404 @@
   .
 -->
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Confira meu portifolio">
-    <meta name="author" content="Daniel Bailão">
-    <title>Daniel Bailão</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/animate.css">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
-        rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic'
-        rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz"
-        crossorigin="anonymous">
-    <link rel="icon" href="imagens/profile/helmet.ico">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daniel Bailão · DBA SQL Server &amp; Desenvolvedor .NET</title>
+  <meta name="description" content="Daniel Soares Bailão — Administrador de Banco de Dados SQL Server e desenvolvedor .NET, com mais de 10 anos de carreira em TI. Performance, automação e sistemas que resolvem problemas reais.">
+  <meta name="author" content="Daniel Soares Bailão">
+  <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dsbailao.github.io/">
+  <meta property="og:title" content="Daniel Bailão · DBA SQL Server &amp; Desenvolvedor .NET">
+  <meta property="og:description" content="Mais de 10 anos de carreira em TI: performance e automação em SQL Server, sistemas em C# e projetos pessoais como o DriveTunes.">
+
+  <link rel="icon" href="imagens/profile/helmet.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
+  <script>
+    // Aplica o tema salvo antes de pintar a página (evita piscar).
+    document.documentElement.classList.add('js');
+    try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
 </head>
 
 <body>
-    <div class="container-fluid">
-        <div class="text-center">
-            <img src="imagens/profile/danielbailao.jpg" width=150 style="margin-top: 50px;" class="profile-pic">
-            <h1>Daniel Soares Bailão</h1>
-            <h3>.Net developer Software Engineer Student and IT Lover</h3>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-github" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><path fill="currentColor" d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.3"/></g><circle cx="17.6" cy="6.4" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3.5 7 8.5 6 8.5-6"/></g></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M9 7h8v8"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4.5A2.5 2.5 0 0 1 2 12.5v-8A2.5 2.5 0 0 1 4.5 2h8A2.5 2.5 0 0 1 15 4.5V5"/></g></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.66 3.58 3 8 3s8-1.34 8-3v-13M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></g></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-cap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 9.5 12 5l10 4.5-10 4.5z"/><path d="M6 11.5v5c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5M22 9.5V15"/></g></symbol>
+    <symbol id="i-award" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="m8.5 14 -1.5 8 5-3 5 3-1.5-8"/></g></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.8 3 2.8 16 0 19M12 2.5c-2.8 3-2.8 16 0 19"/></g></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21.5s-7-6.1-7-11.5a7 7 0 0 1 14 0c0 5.4-7 11.5-7 11.5z"/><circle cx="12" cy="10" r="2.5"/></g></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  </svg>
 
-            <div class="text-center m-20">
-                <a href="https://github.com/dsbailao" class="" target="_blank">
-                    github.com/dsbailao
-                </a>
-            </div>
-        </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
-        <div class="row row-grey">
-            <div class="col-sm-8 col-sm-offset-2">
-                <div class="row">
-                    <div class="col-lg-8 col-lg-push-4">
-                        <img src="imagens/works/erp.JPG" class="img-responsive center-block">
-                    </div>
-                    <div class="col-lg-4 col-lg-pull-8">
-                        <h2>DSB - ERP</h2>
-                        <p>Sistema de controle de cadastro de clientes, funcionários, vendas e gerenciamento de
-                            estoque.</p>
-                        <h4>Tecnologias utilizadas</h4>
-                        <p>Desenvolvido em .Net C# e SQL Server</p>
-                    </div>
-                </div>
-                <div class="row text-center">
-                    <div class="col-xs-12">
-                        <img src="imagens/logos/dotnetSVG.svg" class="techlogo" width="70">
-                        <img src="imagens/logos/sql.png" class="techlogo" width="90">
-                    </div>
-                </div>
-            </div>
-        </div>
+  <header class="topbar" id="topo">
+    <div class="wrap topbar-inner">
+      <a class="logo" href="#topo" aria-label="Início"><span class="logo-prompt">./</span>dsbailao</a>
+      <nav class="nav" id="nav" aria-label="Seções">
+        <a href="#sobre">Sobre</a>
+        <a href="#experiencia">Experiência</a>
+        <a href="#projetos">Projetos</a>
+        <a href="#stack">Tecnologias</a>
+        <a href="#formacao">Formação</a>
+        <a href="#contato" class="nav-cta">Contato</a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="theme-toggle" type="button" aria-label="Alternar tema claro/escuro">
+          <svg class="ic ic-sun"><use href="#i-sun"/></svg>
+          <svg class="ic ic-moon"><use href="#i-moon"/></svg>
+        </button>
+        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
+          <svg class="ic"><use href="#i-menu"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <div class="row row-white">
-            <div class="col-sm-8 col-sm-offset-2">
-                <div class="row">
-                    <div class="col-lg-8">
-                        <img src="imagens/works/tcc.png" class="img-responsive center-block">
-                    </div>
-                    <div class="col-lg-4">
-                        <h2>RA nas Escolas</h2>
-                        <p>Aplicativo em Realidade Aumentada apresentado como requisito parcial para obtenção do título
-                            de Bacharel em Sistemas de Informação.</p>
-                        <h4>Tecnologias utilizadas</h4>
-                        <p>Desenvolvido utilizando Unity 4 tendo como base C# e Java EE. Utilizado o framework Vuforia
-                            para integração com o projeto.</p>
-                        <p>
-                            Conheça mais deste projeto aqui: <a href="http://prezi.com/fup6zyp93juf/?utm_campaign=share&utm_medium=copy&rc=ex0share"
-                                class="" target="_blank">Prezi</a>
-                        </p>
-                    </div>
-                </div>
-                <div class="row text-center">
-                    <div class="col-xs-12">
-                        <img src="imagens/logos/unityDark.png" class="techlogo" style="margin-right: 15px;" width="65">
-                        <img src="imagens/logos/vuforia.png" class="techlogo" width="100">
-                        <img src="imagens/logos/java.png" class="techlogo" width="100">
-                    </div>
-                </div>
-            </div>
+  <main id="conteudo">
+    <!-- ============ HERO ============ -->
+    <section class="hero wrap">
+      <div class="hero-text">
+        <p class="eyebrow mono">&gt; olá, mundo. eu sou</p>
+        <h1>Daniel Soares <span class="grad">Bailão</span></h1>
+        <p class="hero-role">DBA SQL Server &amp; Desenvolvedor&nbsp;.NET</p>
+        <p class="hero-lead">
+          Há mais de uma década transformo processos em sistemas. Hoje cuido da performance e da automação
+          de bancos de dados SQL Server, depois de anos desenvolvendo em C#, Android e Angular.
+        </p>
+        <p class="hero-meta"><svg class="ic"><use href="#i-pin"/></svg> Bebedouro, São Paulo</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#experiencia">Ver trajetória</a>
+          <a class="btn btn-ghost" href="#contato">Vamos conversar</a>
         </div>
+        <ul class="socials" aria-label="Redes">
+          <li><a href="https://github.com/dsbailao" target="_blank" rel="noopener" aria-label="GitHub"><svg class="ic"><use href="#i-github"/></svg></a></li>
+          <li><a href="https://www.linkedin.com/in/dsbailao/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg class="ic"><use href="#i-linkedin"/></svg></a></li>
+          <li><a href="https://www.instagram.com/dsbailao/" target="_blank" rel="noopener" aria-label="Instagram"><svg class="ic"><use href="#i-instagram"/></svg></a></li>
+          <li><a href="mailto:dsbailao@gmail.com" aria-label="E-mail"><svg class="ic"><use href="#i-mail"/></svg></a></li>
+        </ul>
+      </div>
 
-        <div class="row row-tools row-grey">
-            <div class="col-sm-12 text-center">
-                <h3>Ferramentas que utilizo</h3>
-                <img src="imagens/logos/VisualStudio.png" class="techlogo" width="170" style="margin-right: 40px;">
-                <img src="imagens/logos/sql.png" class="techlogo" width="100" style="margin-right: 40px;">
-                <img src="imagens/logos/unityDark.png" class="techlogo" width="90" style="margin-right: 40px;">
-                <img src="imagens/logos/adobexd.svg" class="techlogo" width="80">
-            </div>
-        </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="terminal mono">
+          <div class="term-bar"><i></i><i></i><i></i><span>carreira.sql</span></div>
+          <pre class="term-body"><span class="c-com">-- quem sou eu, em T-SQL</span>
+<span class="c-key">SELECT</span> cargo, empresa, desde
+  <span class="c-key">FROM</span> dbo.Carreira <span class="c-key">WITH</span>(<span class="c-key">NOLOCK</span>)
+ <span class="c-key">WHERE</span> atual = <span class="c-num">1</span>;
 
-        <div class="row row-footer text-center row-white">
-            <div class="col">
-                <div class="m-50 text-center">
-                    <h3 class="m-50-15">Mantenha o contato!</h3>
-                    <div class="col-lg-3">
-                        <i class="fab fa-facebook fa-3x"></i><br>
-                        <a href="https://www.facebook.com/dsbailao" class="" target="_blank">
-                            facebook.com/dsbailao
-                        </a>
-                    </div>
-                    <div class="col-lg-3">
-                        <i class="fab fa-github fa-3x"></i><br>
-                        <a href="https://github.com/dsbailao" class="" target="_blank">
-                            github.com/dsbailao
-                        </a>
-                    </div>
-                    <div class="col-lg-3">
-                        <i class="fab fa-linkedin fa-3x"></i><br>
-                        <a href="https://www.linkedin.com/in/dsbailao/" class="" target="_blank">
-                            linkedin.com/in/dsbailao/
-                        </a>
-                    </div>
-                    <div class="col-lg-3">
-                        <i class="fab fa-instagram fa-3x"></i><br>
-                        <a href="https://www.instagram.com/dsbailao/" class="" target="_blank">
-                            instagram.com/dsbailao/
-                        </a>
-                    </div>
-                </div>
-            </div>
+<span class="c-dim">cargo           empresa   desde</span>
+<span class="c-dim">--------------- --------- -----</span>
+DBA SQL Server  Solfarma  <span class="c-num">2021</span>
+
+<span class="c-dim">(1 linha afetada)</span><span class="cursor"></span></pre>
         </div>
+      </div>
+    </section>
+
+    <div class="wrap stats reveal">
+      <div class="stat"><strong><span data-years-since="2015-08">11</span>+ anos</strong><span>de carreira em TI</span></div>
+      <div class="stat"><strong><span data-years-since="2021-06">5</span>+ anos</strong><span>como DBA SQL Server</span></div>
+      <div class="stat"><strong>4 cargos</strong><span>de júnior a DBA na mesma empresa</span></div>
+      <div class="stat"><strong>Pós</strong><span>em Engenharia de Software</span></div>
     </div>
 
-    <script src="js/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-</body>
+    <!-- ============ SOBRE ============ -->
+    <section class="section wrap reveal" id="sobre">
+      <div class="section-head">
+        <p class="kicker mono">01 · sobre</p>
+        <h2>Tecnologia a serviço do negócio</h2>
+      </div>
+      <div class="about">
+        <div class="about-text">
+          <p>
+            Sou <strong>Administrador de Banco de Dados SQL Server</strong> na Solfarma, onde entrei em 2015 como
+            programador júnior e cresci até analista sênior antes de assumir a área de dados.
+          </p>
+          <p>
+            No dia a dia analiso e otimizo consultas T-SQL, investigo falhas de sistema e automatizo rotinas.
+            Foi desse trabalho que nasceu o <strong>GS300TI</strong>, ferramenta que criei para automatizar
+            o deploy de bancos de dados e o backup estrutural.
+          </p>
+          <p>
+            Antes da TI, trabalhei sete anos como mecânico. Talvez venha daí a mania de abrir o capô para
+            entender como as coisas funcionam por dentro, e projetos pessoais como o <a href="#projetos">DriveTunes</a>.
+          </p>
+        </div>
+        <ul class="pillars">
+          <li class="pillar">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-db"/></svg></span>
+            <h3>Performance em SQL Server</h3>
+            <p>Tuning de consultas T-SQL, índices e análise de falhas em produção.</p>
+          </li>
+          <li class="pillar">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-bolt"/></svg></span>
+            <h3>Automação</h3>
+            <p>Rotinas, deploy de banco e backup estrutural sem trabalho manual.</p>
+          </li>
+          <li class="pillar">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-code"/></svg></span>
+            <h3>Desenvolvimento</h3>
+            <p>Sistemas em C# e .NET, app Android nativo e portal web em Angular.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
 
+    <!-- ============ EXPERIÊNCIA ============ -->
+    <section class="section wrap reveal" id="experiencia">
+      <div class="section-head">
+        <p class="kicker mono">02 · experiência</p>
+        <h2>Trajetória profissional</h2>
+      </div>
+
+      <div class="exp">
+        <article class="exp-company">
+          <header class="exp-head">
+            <h3>Solfarma</h3>
+            <p><span data-years-since="2015-08">11</span> anos · Bebedouro, SP</p>
+          </header>
+          <ol class="roles">
+            <li class="role current">
+              <div class="role-top"><h4>Administrador de Banco de Dados SQL Server</h4><span class="when mono">jun 2021 — atual</span></div>
+              <p>Análise técnica e melhoria de consultas T-SQL, identificação de falhas de sistema e automação de rotinas. Criador e desenvolvedor do GS300TI, ferramenta de automação de deploy de bancos SQL e backup estrutural.</p>
+            </li>
+            <li class="role">
+              <div class="role-top"><h4>Programador / Analista Sênior</h4><span class="when mono">jan 2020 — jun 2021</span></div>
+              <p>Desenvolvimento de software em C# e SQL Server. Manutenção do app Android nativo (Java) e do portal web (Angular).</p>
+            </li>
+            <li class="role">
+              <div class="role-top"><h4>Programador / Analista Pleno</h4><span class="when mono">nov 2017 — jan 2020</span></div>
+            </li>
+            <li class="role">
+              <div class="role-top"><h4>Programador / Analista Júnior</h4><span class="when mono">ago 2015 — out 2017</span></div>
+            </li>
+          </ol>
+        </article>
+
+        <article class="exp-company">
+          <header class="exp-head">
+            <h3>UNIFAFIBE</h3>
+            <p>Bebedouro, SP</p>
+          </header>
+          <ol class="roles">
+            <li class="role">
+              <div class="role-top"><h4>Professor convidado</h4><span class="when mono">abr 2017 — ago 2017</span></div>
+              <p>Curso de extensão de desenvolvimento de jogos com Unity 5 e Blender 3D para alunos de Sistemas de Informação.</p>
+            </li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ PROJETOS ============ -->
+    <section class="section wrap reveal" id="projetos">
+      <div class="section-head">
+        <p class="kicker mono">03 · projetos</p>
+        <h2>Coisas que construí</h2>
+      </div>
+
+      <article class="project featured">
+        <div class="project-media dt-mock" aria-hidden="true">
+          <div class="dt-screen">
+            <div class="dt-rail"><i></i><i></i><i></i><i class="on"></i></div>
+            <div class="dt-art"></div>
+            <div class="dt-side">
+              <span class="dt-tabs"><b>Player</b><em>Letra</em><em>Vídeo</em></span>
+              <span class="dt-title"></span>
+              <span class="dt-artist"></span>
+              <span class="dt-lyric">♪ Is this the real life?</span>
+              <span class="dt-bar"><span></span></span>
+              <span class="dt-ctrls"><i></i><i></i><i class="play"></i><i></i><i></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="project-body">
+          <p class="badge">Novo · 2026</p>
+          <h3>DriveTunes</h3>
+          <p>
+            Player do YouTube pensado para centrais multimídia de carro: botões grandes, busca por voz,
+            letras sincronizadas e sugestões com base no que você ouve. Login com a conta Google e
+            acesso somente leitura.
+          </p>
+          <ul class="tags">
+            <li>JavaScript</li><li>YouTube Data API</li><li>OAuth 2.0</li><li>PWA</li><li>CSS responsivo</li>
+          </ul>
+          <div class="project-links">
+            <a class="btn btn-primary btn-sm" href="DriveTune/">Abrir o app <svg class="ic"><use href="#i-arrow"/></svg></a>
+          </div>
+        </div>
+      </article>
+
+      <div class="project-grid">
+        <article class="project">
+          <div class="project-media gs-mock" aria-hidden="true">
+            <pre class="mono"><span class="c-dim">&gt;</span> gs300ti deploy --env prod
+<span class="c-ok">✔</span> backup estrutural gerado
+<span class="c-ok">✔</span> scripts validados (42)
+<span class="c-ok">✔</span> deploy concluído em 38s</pre>
+          </div>
+          <div class="project-body">
+            <p class="badge badge-muted">Ferramenta interna</p>
+            <h3>GS300TI</h3>
+            <p>
+              Ferramenta que criei para automatizar o deploy de bancos de dados SQL Server e o backup
+              estrutural, reduzindo etapas manuais e risco nas publicações.
+            </p>
+            <ul class="tags"><li>SQL Server</li><li>T-SQL</li><li>Automação</li><li>Deploy</li></ul>
+          </div>
+        </article>
+
+        <article class="project">
+          <div class="project-media"><img src="imagens/works/erp.JPG" alt="Tela inicial do DSB-ERP" loading="lazy"></div>
+          <div class="project-body">
+            <h3>DSB-ERP</h3>
+            <p>
+              ERP para pequenos comércios: cadastro de clientes e funcionários, vendas e controle de estoque
+              em uma aplicação desktop simples de operar.
+            </p>
+            <ul class="tags"><li>C#</li><li>.NET</li><li>Entity Framework</li><li>SQL Server</li></ul>
+          </div>
+        </article>
+
+        <article class="project">
+          <div class="project-media"><img src="imagens/works/tcc.png" alt="Aplicativo de realidade aumentada lendo um marcador impresso" loading="lazy"></div>
+          <div class="project-body">
+            <h3>RA nas Escolas</h3>
+            <p>
+              Aplicativo de realidade aumentada para apoiar o ensino em sala de aula, desenvolvido como
+              trabalho de conclusão do bacharelado em Sistemas de Informação.
+            </p>
+            <ul class="tags"><li>Unity</li><li>C#</li><li>Vuforia</li><li>Java EE</li></ul>
+            <div class="project-links">
+              <a class="link-arrow" href="http://prezi.com/fup6zyp93juf/?utm_campaign=share&amp;utm_medium=copy&amp;rc=ex0share" target="_blank" rel="noopener">Ver apresentação <svg class="ic"><use href="#i-arrow"/></svg></a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <p class="more">
+        Mais código em <a href="https://github.com/dsbailao" target="_blank" rel="noopener">github.com/dsbailao</a>
+      </p>
+    </section>
+
+    <!-- ============ STACK ============ -->
+    <section class="section wrap reveal" id="stack">
+      <div class="section-head">
+        <p class="kicker mono">04 · tecnologias</p>
+        <h2>Com o que eu trabalho</h2>
+      </div>
+      <div class="stack">
+        <div class="stack-group">
+          <h3><svg class="ic"><use href="#i-db"/></svg>Banco de dados</h3>
+          <ul class="chips"><li>SQL Server</li><li>T-SQL</li><li>Tuning de consultas</li><li>Análise de falhas</li><li>Automação de rotinas</li><li>Modelagem relacional</li></ul>
+        </div>
+        <div class="stack-group">
+          <h3><svg class="ic"><use href="#i-code"/></svg>Desenvolvimento</h3>
+          <ul class="chips"><li>C#</li><li>.NET</li><li>Entity Framework</li><li>Java (Android)</li><li>Angular</li><li>JavaScript</li><li>HTML &amp; CSS</li></ul>
+        </div>
+        <div class="stack-group">
+          <h3><svg class="ic"><use href="#i-bolt"/></svg>3D &amp; ferramentas</h3>
+          <ul class="chips"><li>Unity 3D</li><li>Blender 3D</li><li>Vuforia</li><li>Visual Studio</li><li>Git &amp; GitHub</li><li>Adobe XD</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FORMAÇÃO ============ -->
+    <section class="section wrap reveal" id="formacao">
+      <div class="section-head">
+        <p class="kicker mono">05 · formação</p>
+        <h2>Formação e certificações</h2>
+      </div>
+      <div class="edu">
+        <ol class="timeline">
+          <li>
+            <span class="tl-ic"><svg class="ic"><use href="#i-cap"/></svg></span>
+            <div>
+              <p class="when mono">2017 — 2018 · UNIFAFIBE</p>
+              <h3>Pós-graduação em Engenharia de Software</h3>
+              <p>Contribuí com melhorias no framework AidMe, aplicando práticas de arquitetura e qualidade de software.</p>
+            </div>
+          </li>
+          <li>
+            <span class="tl-ic"><svg class="ic"><use href="#i-cap"/></svg></span>
+            <div>
+              <p class="when mono">2013 — 2016 · UNIFAFIBE</p>
+              <h3>Bacharelado em Sistemas de Informação</h3>
+              <p>Trabalho de conclusão: <em>RA nas Escolas</em>, aplicativo de realidade aumentada para educação.</p>
+            </div>
+          </li>
+          <li>
+            <span class="tl-ic"><svg class="ic"><use href="#i-globe"/></svg></span>
+            <div>
+              <p class="when mono">2009 — 2012 · Centro de Estudos de Línguas</p>
+              <h3>Língua Espanhola e Literaturas de Língua Espanhola</h3>
+            </div>
+          </li>
+        </ol>
+
+        <aside class="edu-side">
+          <div class="side-card">
+            <h3><svg class="ic"><use href="#i-award"/></svg>Certificação</h3>
+            <p class="cert-name">Databases: Relational Databases and SQL</p>
+            <p class="muted">Stanford Online · edX (certificado verificado)</p>
+          </div>
+          <div class="side-card">
+            <h3><svg class="ic"><use href="#i-globe"/></svg>Idiomas</h3>
+            <ul class="langs">
+              <li><span>Português</span><span class="lvl">Nativo</span></li>
+              <li><span>Espanhol</span><span class="lvl">Profissional</span></li>
+              <li><span>Inglês</span><span class="lvl">Básico</span></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ CONTATO ============ -->
+    <section class="section wrap reveal" id="contato">
+      <div class="contact">
+        <p class="kicker mono">06 · contato</p>
+        <h2>Tem um projeto ou uma ideia?</h2>
+        <p class="contact-lead">Estou aberto a conversas sobre banco de dados, automação, projetos e oportunidades. Respondo por e-mail ou LinkedIn.</p>
+        <div class="contact-mail">
+          <a class="btn btn-primary btn-lg" href="mailto:dsbailao@gmail.com"><svg class="ic"><use href="#i-mail"/></svg> dsbailao@gmail.com</a>
+          <button class="btn btn-ghost btn-lg" id="copy-mail" type="button" data-mail="dsbailao@gmail.com">
+            <svg class="ic"><use href="#i-copy"/></svg><span>Copiar e-mail</span>
+          </button>
+        </div>
+        <ul class="contact-links">
+          <li><a href="https://www.linkedin.com/in/dsbailao/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-linkedin"/></svg>linkedin.com/in/dsbailao</a></li>
+          <li><a href="https://github.com/dsbailao" target="_blank" rel="noopener"><svg class="ic"><use href="#i-github"/></svg>github.com/dsbailao</a></li>
+          <li><a href="https://www.instagram.com/dsbailao/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-instagram"/></svg>instagram.com/dsbailao</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span>© <span id="year">2026</span> Daniel Soares Bailão</span>
+      <span class="mono">feito à mão · hospedado no GitHub Pages</span>
+    </div>
+  </footer>
+
+  <script src="js/site.js"></script>
+</body>
 </html>

@@ -206,6 +206,11 @@
 
 <div class="menu" id="menu" hidden>
   <div class="menu-head"><strong id="menu-name">Minha conta</strong><span class="muted">YouTube</span></div>
+  <button class="menu-item" data-action="toggle-music" role="switch" aria-checked="true" id="music-only-toggle">
+    <svg class="ic"><use href="#i-now"/></svg>
+    <span class="menu-label">Somente músicas<small>Esconde vídeos que não são música</small></span>
+    <span class="switch" aria-hidden="true"></span>
+  </button>
   <button class="menu-item" data-action="change-client"><svg class="ic"><use href="#i-key"/></svg>Alterar Client ID</button>
   <button class="menu-item danger" data-action="logout"><svg class="ic"><use href="#i-logout"/></svg>Sair da conta</button>
 </div>

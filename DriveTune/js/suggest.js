@@ -41,9 +41,9 @@ export function recordPlay(track) {
   }
 }
 
-export function mostPlayed(limit = 15) {
+export function mostPlayed(limit = 15, exclude = new Set()) {
   return Object.values(store.get('plays', {}))
-    .filter((p) => p.n >= 2)
+    .filter((p) => p.n >= 2 && !exclude.has(p.t.id))
     .sort((a, b) => b.n - a.n || b.at - a.at)
     .slice(0, limit)
     .map((p) => p.t);
@@ -79,8 +79,10 @@ export function cachedRecommendations() {
 
 // Cada busca de playlist custa 100 unidades da cota diária (10.000),
 // por isso o resultado fica guardado por 12h.
-export async function getRecommendations({ liked = [], ownIds = [], force = false } = {}) {
-  const artists = topArtists({ liked, recent: store.get('recent', []), plays: store.get('plays', {}) });
+export async function getRecommendations({ liked = [], ownIds = [], force = false, exclude = new Set() } = {}) {
+  const recent = store.get('recent', []).filter((t) => !exclude.has(t.id));
+  const plays = Object.fromEntries(Object.entries(store.get('plays', {})).filter(([id]) => !exclude.has(id)));
+  const artists = topArtists({ liked, recent, plays });
   const mixes = artists.map(({ name, thumb, tracks }) => ({ name, thumb, tracks }));
   const key = artists.slice(0, 3).map((a) => norm(a.name)).join('|');
 

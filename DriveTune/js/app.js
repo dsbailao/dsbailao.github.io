@@ -102,6 +102,7 @@ function enterApp() {
   updateNowPlaying();
   updateButtons();
   renderProfile();
+  renderMusicToggle();
   startClock();
   setInterval(tick, 250);
 
@@ -254,6 +255,7 @@ function onClick(e) {
     case 'sync-plus': setOffset(S.offset + 0.5); break;
     case 'reconnect': reconnect(); break;
     case 'toggle-video': toggleVideo(); break;
+    case 'toggle-music': toggleMusicOnly(); break;
     case 'suggest-pick': doSearch(q); break;
     case 'suggest-fill': fillSuggestion(q); break;
     case 'artist-mix': playArtistMix(i); break;
@@ -617,7 +619,8 @@ function renderHome() {
   const el = $('#view-home');
   const name = (S.profile?.name || '').split(' ')[0];
   const t = current();
-  const recent = store.get('recent', []);
+  const hide = nonMusic();
+  const recent = store.get('recent', []).filter((t) => !hide.has(t.id));
   lists.recent = recent;
 
   let html = `<p class="greet">${greeting()}${name ? `, ${esc(name)}` : ''}</p>`;
@@ -660,7 +663,7 @@ function renderHome() {
     ? 'Nenhuma sugestão agora. Toque em atualizar para tentar de novo.'
     : 'Curta ou toque algumas músicas para receber sugestões.');
 
-  const top = mostPlayed();
+  const top = mostPlayed(15, hide);
   lists.top = top;
   if (top.length >= 3) {
     html += `<div class="section-head"><h2>Suas mais tocadas</h2>
@@ -717,7 +720,26 @@ async function openPlaylist(id) {
     if (!tracks) { el.innerHTML = head([]) + emptyBlock('Não foi possível carregar esta playlist.'); return; }
     S.playlistCache.set(id, tracks);
   }
-  el.innerHTML = head(tracks) + (tracks.length ? trackRows(tracks, key) : emptyBlock('Playlist vazia.'));
+  const note = tracks.hidden
+    ? `<p class="pl-note">${tracks.hidden} ${tracks.hidden === 1 ? 'vídeo que não é música foi ocultado' : 'vídeos que não são música foram ocultados'}.</p>`
+    : '';
+  const empty = tracks.hidden ? 'Nenhuma música nesta playlist (só vídeos de outros tipos).' : 'Playlist vazia.';
+  el.innerHTML = head(tracks) + note + (tracks.length ? trackRows(tracks, key) : emptyBlock(empty));
+}
+
+function renderMusicToggle() {
+  $('#music-only-toggle').setAttribute('aria-checked', String(YT.isMusicOnly()));
+}
+
+function toggleMusicOnly() {
+  YT.setMusicOnly(!YT.isMusicOnly());
+  renderMusicToggle();
+  toast(YT.isMusicOnly() ? 'Mostrando somente músicas' : 'Mostrando todos os vídeos');
+  // Listas já carregadas foram filtradas com a regra antiga.
+  S.playlistCache.clear();
+  if (S.view === 'playlist') openPlaylist($('#view-playlist').dataset.id);
+  if (S.view === 'search' && $('#search-input').value.trim()) doSearch($('#search-input').value);
+  if (getToken()) loadRecommendations();
 }
 
 async function shuffleLiked() {
@@ -734,11 +756,34 @@ async function shuffleLiked() {
 }
 
 /* ---------- recomendações ---------- */
+// IDs do histórico já classificados como "não é música" (só valem com o filtro ligado).
+function nonMusic() {
+  if (!YT.isMusicOnly()) return new Set();
+  const checked = store.get('musicChecked', {});
+  return new Set(Object.keys(checked).filter((id) => checked[id] === false));
+}
+
+// Classifica uma única vez o que foi tocado antes do filtro existir. Nada é apagado do histórico.
+async function classifyHistory() {
+  if (!YT.isMusicOnly()) return;
+  const checked = store.get('musicChecked', {});
+  const ids = [...new Set([
+    ...store.get('recent', []).map((t) => t.id),
+    ...Object.keys(store.get('plays', {})),
+  ])].filter((id) => !(id in checked));
+  if (!ids.length) return;
+  const keep = await YT.musicIds(ids);
+  ids.forEach((id) => { checked[id] = keep.has(id); });
+  const entries = Object.entries(checked);
+  store.set('musicChecked', Object.fromEntries(entries.slice(-1500)));
+}
+
 async function loadRecommendations({ force = false } = {}) {
   if (S.recsLoading) return;
   S.recsLoading = true;
   if (S.view === 'home') renderHome();
   try {
+    await guard(classifyHistory);
     let liked = S.playlistCache.get('liked');
     if (!liked) {
       liked = (await guard(() => YT.getLiked())) || [];
@@ -748,6 +793,7 @@ async function loadRecommendations({ force = false } = {}) {
       liked,
       ownIds: (S.playlists || []).map((p) => p.id),
       force,
+      exclude: nonMusic(),
     }));
     if (recs) {
       S.recs = recs;
@@ -1101,7 +1147,7 @@ async function loadPlaylists() {
 function logout() {
   if (!confirm('Sair da sua conta do YouTube neste aparelho?')) return;
   signOut();
-  ['profile', 'playlists', 'session', 'recent', 'searches', 'plays', 'recs'].forEach((k) => store.remove(k));
+  ['profile', 'playlists', 'session', 'recent', 'searches', 'plays', 'recs', 'musicChecked'].forEach((k) => store.remove(k));
   location.reload();
 }
 

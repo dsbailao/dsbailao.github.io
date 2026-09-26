@@ -1,0 +1,16 @@
+{
+  "name": "DriveTunes",
+  "short_name": "DriveTunes",
+  "description": "Player do YouTube pensado para centrais multimídia de veículos.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#07080b",
+  "theme_color": "#07080b",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

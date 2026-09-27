@@ -54,6 +54,7 @@ async function boot() {
   if (CONFIG.GOOGLE_CLIENT_ID) $$('[data-action="change-client"]').forEach((el) => { el.hidden = true; });
   injectTemplates();
   bindEvents();
+  initPwa();
 
   const clientId = CONFIG.GOOGLE_CLIENT_ID || store.get('clientId');
   if (!clientId) return showScreen('setup');
@@ -256,6 +257,7 @@ function onClick(e) {
     case 'reconnect': reconnect(); break;
     case 'toggle-video': toggleVideo(); break;
     case 'toggle-music': toggleMusicOnly(); break;
+    case 'install': installApp(); break;
     case 'suggest-pick': doSearch(q); break;
     case 'suggest-fill': fillSuggestion(q); break;
     case 'artist-mix': playArtistMix(i); break;
@@ -319,6 +321,7 @@ function setMode(mode) {
 // O vídeo só aparece no modo Vídeo ou no modo Player com "Mostrar vídeo" ligado.
 // Nos demais casos o player fica fora da tela (o áudio continua) e o slot mostra a capa.
 function placePlayer() {
+  fitSlots();
   const wrap = $('#player-wrap');
   const hide = () => { wrap.style.cssText = 'left:-10000px;top:0;width:320px;height:180px'; };
   if (!current() || $('#app').hidden || S.view !== 'playing') return hide();
@@ -1192,6 +1195,56 @@ function addRecent(t) {
   const recent = store.get('recent', []).filter((x) => x.id !== t.id);
   recent.unshift(t);
   store.set('recent', recent.slice(0, 30));
+}
+
+/* ---------- instalação como app (PWA) ---------- */
+let installPrompt = null;
+
+function initPwa() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* sem service worker: só não instala */ });
+  }
+  // O Chrome avisa quando o app pode ser instalado; guardamos o convite para o botão do menu.
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    $('#btn-install').hidden = false;
+  });
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    $('#btn-install').hidden = true;
+    toast('DriveTunes instalado! Abra pelo ícone na tela inicial.');
+  });
+}
+
+async function installApp() {
+  $('#menu').hidden = true;
+  if (!installPrompt) {
+    toast('Use o menu do navegador (⋮) → "Adicionar à tela inicial".');
+    return;
+  }
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  if (outcome === 'accepted') installPrompt = null;
+}
+
+/* ---------- compatibilidade com navegadores antigos (Chrome < 105) ---------- */
+// Sem "container queries", a área do vídeo/capa não consegue se ajustar sozinha
+// ao espaço disponível; calculamos o tamanho 16:9 aqui.
+const NO_CONTAINER_UNITS = !(window.CSS && CSS.supports('width', '1cqw'));
+const PORTRAIT = window.matchMedia('(max-aspect-ratio: 1/1), (max-width: 700px)');
+
+function fitSlots() {
+  if (!NO_CONTAINER_UNITS) return;
+  for (const box of $$('.np-art, .video-stage')) {
+    const slot = box.querySelector('.player-slot');
+    if (!slot) continue;
+    // Em retrato a capa ocupa a largura toda (altura automática); o CSS já resolve.
+    if (PORTRAIT.matches && box.classList.contains('np-art')) { slot.style.width = ''; continue; }
+    if (!box.clientWidth || !box.clientHeight) continue;
+    const w = `${Math.floor(Math.min(box.clientWidth, (box.clientHeight * 16) / 9))}px`;
+    if (slot.style.width !== w) slot.style.width = w;
+  }
 }
 
 /* ---------- extras ---------- */

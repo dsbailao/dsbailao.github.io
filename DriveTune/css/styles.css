@@ -596,7 +596,7 @@ code {
 /* modo Player */
 .np-cover { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(1rem, 3vw, 2.6rem); align-items: center; }
 .np-art { height: 100%; min-height: 0; display: grid; place-items: center; container-type: size; }
-.np-art .player-slot { width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55); }
+.np-art .player-slot { width: 100%; width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55); }
 .np-side { display: flex; flex-direction: column; gap: 1rem; justify-content: center; min-width: 0; }
 .np-lyric-line { margin: 0; min-height: 1.5em; font-size: 1.15rem; font-weight: 650; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -642,7 +642,7 @@ code {
 /* modo Vídeo */
 .np-video { display: flex; }
 .video-stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; container-type: size; }
-.video-stage .player-slot { width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9; border-radius: var(--radius-sm); }
+.video-stage .player-slot { width: 100%; width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9; border-radius: var(--radius-sm); }
 .video-overlay {
   position: absolute;
   z-index: 10;
@@ -679,6 +679,8 @@ code {
 .menu-item { width: 100%; display: flex; align-items: center; gap: 0.8rem; min-height: 3.4rem; padding: 0 0.9rem; border-radius: var(--radius-sm); font-weight: 650; text-align: left; }
 .menu-item:active { background: var(--surface-3); }
 .menu-item.danger { color: #ff7b8a; }
+.menu-item.accent { color: var(--accent); }
+.menu-item.accent small { color: var(--text-2); }
 .menu-label { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
 .menu-label small { font-size: 0.75rem; font-weight: 500; color: var(--text-3); margin-top: 0.15rem; }
 .switch { position: relative; width: 2.8rem; height: 1.6rem; border-radius: 999px; background: var(--surface-3); flex: none; transition: background 0.2s; }

@@ -10,6 +10,8 @@
   <title>DriveTunes</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -206,6 +208,10 @@
 
 <div class="menu" id="menu" hidden>
   <div class="menu-head"><strong id="menu-name">Minha conta</strong><span class="muted">YouTube</span></div>
+  <button class="menu-item accent" data-action="install" id="btn-install" hidden>
+    <svg class="ic"><use href="#i-add"/></svg>
+    <span class="menu-label">Instalar app<small>Cria o ícone do DriveTunes na tela inicial</small></span>
+  </button>
   <button class="menu-item" data-action="toggle-music" role="switch" aria-checked="true" id="music-only-toggle">
     <svg class="ic"><use href="#i-now"/></svg>
     <span class="menu-label">Somente músicas<small>Esconde vídeos que não são música</small></span>

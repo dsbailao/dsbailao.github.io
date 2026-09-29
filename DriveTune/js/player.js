@@ -58,8 +58,6 @@ export const Player = {
   play() { player?.playVideo?.(); },
   pause() { player?.pauseVideo?.(); },
   seek(sec) { player?.seekTo?.(Math.max(0, sec), true); },
-  getVolume() { return player?.getVolume?.() ?? 100; },
-  setVolume(v) { player?.setVolume?.(Math.max(0, Math.min(100, Math.round(v)))); },
   time() { return player?.getCurrentTime?.() || 0; },
   duration() { return player?.getDuration?.() || 0; },
   get ready() { return !!player?.playVideo; },

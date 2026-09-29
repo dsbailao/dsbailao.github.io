@@ -6,7 +6,6 @@ import { initPlayer, Player, onPlayer } from './player.js';
 import { fetchLyrics } from './lyrics.js';
 import * as Media from './media.js';
 import { suggestQueries, recordPlay, mostPlayed, getRecommendations, cachedRecommendations } from './suggest.js';
-import * as GPS from './gps.js';
 
 /* ---------- utilidades ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -43,7 +42,6 @@ const S = {
   showVideo: false, // vídeo no modo Player; sempre começa desligado
   seeking: false, seekP: 0, lastSave: 0, errors: 0, videoWarned: false,
   overlayTimer: null,
-  split: false, // tela dividida com o GPS
 };
 const lists = {};
 const TITLES = { home: 'Início', search: 'Buscar', library: 'Biblioteca', playlist: 'Playlist', mood: 'Humor', queue: 'Fila', playing: 'Tocando agora' };
@@ -74,8 +72,6 @@ async function boot() {
   bindEvents();
   initPwa();
   initAutoFullscreen();
-  GPS.initGps({ toast, duck });
-  $('#split').classList.toggle('dock-left', store.get('dockLeft', false));
 
   const clientId = CONFIG.GOOGLE_CLIENT_ID || store.get('clientId');
   if (!clientId) return showScreen('setup');
@@ -282,11 +278,7 @@ function onClick(e) {
     case 'queue-clear': clearQueue(); break;
     case 'open-playlist': openPlaylist(id); break;
     case 'shuffle-liked': shuffleLiked(); break;
-    case 'voice': startVoice(el); break;
-    case 'voice-dest': voiceDestination(el); break;
-    case 'gps': openSplit(); break;
-    case 'gps-close': closeSplit(); break;
-    case 'gps-swap': swapSplit(); break;
+    case 'voice': startVoice(); break;
     case 'mood': openMood(i); break;
     case 'mood-play': playMood(i); break;
     case 'search-chip': doSearch(q); break;
@@ -370,7 +362,7 @@ function placePlayer() {
   fitSlots();
   const wrap = $('#player-wrap');
   const hide = () => { wrap.style.cssText = 'left:-10000px;top:0;width:320px;height:180px'; };
-  if (!current() || $('#app').hidden || S.split || S.view !== 'playing') return hide();
+  if (!current() || $('#app').hidden || S.view !== 'playing') return hide();
   const videoVisible = S.mode === 'video' || (S.mode === 'cover' && S.showVideo);
   if (!videoVisible) return hide();
   const slot = $(`#slot-${S.mode}`);
@@ -596,7 +588,6 @@ function updateNowPlaying() {
   $('#np-bg').style.backgroundImage = t ? `url("${t.thumb}")` : '';
   document.documentElement.style.setProperty('--cover', t ? `url("${t.thumb}")` : 'none');
   $$('.track[data-id]').forEach((li) => li.classList.toggle('is-current', li.dataset.id === t?.id));
-  renderDockNext();
   Media.setMeta(t);
   if (S.view === 'home') renderHome();
   requestAnimationFrame(placePlayer);
@@ -852,7 +843,7 @@ async function playMood(i) {
   const tracks = await guard(() => YT.search(m.q));
   if (!tracks?.length) { toast('Não foi possível montar o mix agora.'); return; }
   playList(tracks, 0, { shuffle: true });
-  if (!S.split) navigate('playing');
+  navigate('playing');
 }
 
 async function openPlaylist(id) {
@@ -919,7 +910,7 @@ async function shuffleLiked() {
   }
   lists['pl:liked'] = tracks;
   playList(tracks, 0, { shuffle: true });
-  if (!S.split) navigate('playing');
+  navigate('playing');
 }
 
 /* ---------- recomendações ---------- */
@@ -1118,14 +1109,14 @@ async function doSearch(query, { autoplay = false } = {}) {
   body.innerHTML = res.length ? trackRows(res, 'search') : emptyBlock('Nenhum resultado.');
   if (autoplay && res.length) {
     playList(res, 0);
-    if (!S.split) navigate('playing');
+    navigate('playing');
   }
 }
 
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognizer = null;
 
-// Reconhecimento de voz genérico (música ou destino do GPS).
+// Reconhecimento de voz.
 function listen(button, { onInterim, onFinal }) {
   if (!SpeechRec) { toast('Busca por voz não é suportada neste navegador.'); return; }
   if (recognizer) { recognizer.abort(); return; }
@@ -1157,13 +1148,12 @@ function listen(button, { onInterim, onFinal }) {
   recognizer.start();
 }
 
-function startVoice(btn) {
+function startVoice() {
   const input = $('#search-input');
-  if (!S.split && S.view !== 'search') navigate('search');
-  if (S.split) toast('Ouvindo… diga o nome da música');
+  if (S.view !== 'search') navigate('search');
   input.value = '';
   input.placeholder = 'Fale: "tocar" + nome da música…';
-  listen(S.split ? btn : $('#btn-mic'), {
+  listen($('#btn-mic'), {
     onInterim: (txt) => { input.value = txt; },
     onFinal: (spoken) => {
       input.placeholder = 'Música, artista ou álbum';
@@ -1173,73 +1163,6 @@ function startVoice(btn) {
       doSearch(cmd ? cmd[2] : spoken, { autoplay: true });
     },
   });
-}
-
-function voiceDestination(btn) {
-  const input = $('#map-q');
-  input.placeholder = 'Fale o destino…';
-  listen(btn, {
-    onInterim: (txt) => { input.value = txt; },
-    onFinal: (spoken) => {
-      input.placeholder = 'Para onde vamos?';
-      if (!spoken) return;
-      const cmd = spoken.match(/^(ir para|ir pra|me leve para|me leva pra|navegar para|rota para)\s+(.+)/i);
-      GPS.searchDestination(cmd ? cmd[2] : spoken);
-    },
-  });
-}
-
-/* ---------- tela dividida: GPS + música ---------- */
-function openSplit() {
-  S.split = true;
-  $('#split').hidden = false;
-  document.body.classList.add('split-on');
-  $('#menu').hidden = true;
-  renderDockNext();
-  Media.keepAwake('gps', true);
-  placePlayer();
-  GPS.openGps();
-}
-
-function closeSplit() {
-  S.split = false;
-  $('#split').hidden = true;
-  document.body.classList.remove('split-on');
-  // Com navegação ativa a voz continua guiando e a tela continua acesa.
-  if (!GPS.isNavigating()) Media.keepAwake('gps', false);
-  GPS.closeGps();
-  placePlayer();
-}
-
-function swapSplit() {
-  const left = !$('#split').classList.contains('dock-left');
-  $('#split').classList.toggle('dock-left', left);
-  store.set('dockLeft', left);
-}
-
-function renderDockNext() {
-  const el = $('#dock-next');
-  if (!el) return;
-  const upcoming = S.queue.slice(S.index + 1, S.index + 4);
-  el.innerHTML = upcoming.length
-    ? `<p class="dock-label">A seguir</p>${upcoming.map((t, k) => `
-      <button class="qp" data-action="jump" data-index="${S.index + 1 + k}">
-        <img loading="lazy" src="${esc(t.thumb)}" alt="">
-        <span class="qp-text"><span class="qp-t">${esc(t.title)}</span><span class="qp-a">${esc(t.artist)}</span></span>
-      </button>`).join('')}`
-    : '';
-}
-
-// Abaixa a música enquanto o GPS fala.
-let duckedFrom = null;
-function duck(on) {
-  if (on && duckedFrom === null) {
-    duckedFrom = Player.getVolume();
-    Player.setVolume(Math.min(duckedFrom, 25));
-  } else if (!on && duckedFrom !== null) {
-    Player.setVolume(duckedFrom);
-    duckedFrom = null;
-  }
 }
 
 /* ---------- letras ---------- */
@@ -1300,9 +1223,7 @@ function updateLyricHighlight(time) {
   const el = $('#lyrics');
   el.querySelector('.ly.active')?.classList.remove('active');
   el.querySelector(`.ly[data-i="${i}"]`)?.classList.add('active');
-  const lineText = i >= 0 ? lines[i].text || '♪' : '';
-  $('#cover-lyric').textContent = lineText;
-  $('#dock-lyric').textContent = lineText;
+  $('#cover-lyric').textContent = i >= 0 ? lines[i].text || '♪' : '';
   if (S.view === 'playing' && S.mode === 'lyrics') scrollToActive();
 }
 
@@ -1412,7 +1333,6 @@ function changeClient() {
 
 /* ---------- sessão / histórico ---------- */
 function saveSession(time) {
-  renderDockNext();
   const t = current();
   if (!t) { store.remove('session'); return; }
   const playedHere = Player.loadedId === t.id && S.ytState !== 5 && S.ytState !== -1;

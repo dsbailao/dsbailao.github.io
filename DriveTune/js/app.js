@@ -6,6 +6,7 @@ import { initPlayer, Player, onPlayer } from './player.js';
 import { fetchLyrics } from './lyrics.js';
 import * as Media from './media.js';
 import { suggestQueries, recordPlay, mostPlayed, getRecommendations, cachedRecommendations } from './suggest.js';
+import * as GPS from './gps.js';
 
 /* ---------- utilidades ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -42,9 +43,26 @@ const S = {
   showVideo: false, // vídeo no modo Player; sempre começa desligado
   seeking: false, seekP: 0, lastSave: 0, errors: 0, videoWarned: false,
   overlayTimer: null,
+  split: false, // tela dividida com o GPS
 };
 const lists = {};
-const TITLES = { home: 'Início', search: 'Buscar', library: 'Biblioteca', playlist: 'Playlist', queue: 'Fila', playing: 'Tocando agora' };
+const TITLES = { home: 'Início', search: 'Buscar', library: 'Biblioteca', playlist: 'Playlist', mood: 'Humor', queue: 'Fila', playing: 'Tocando agora' };
+
+// Chips do topo da tela inicial, como no YouTube Music.
+const MOODS = [
+  { label: 'Na estrada', q: 'músicas para viajar de carro' },
+  { label: 'Relaxar', q: 'músicas para relaxar' },
+  { label: 'Energia', q: 'músicas animadas' },
+  { label: 'Treino', q: 'músicas para treinar' },
+  { label: 'Festa', q: 'músicas para festa' },
+  { label: 'Romance', q: 'músicas românticas' },
+  { label: 'Foco', q: 'músicas para concentrar' },
+  { label: 'Sertanejo', q: 'sertanejo mais tocadas' },
+  { label: 'Rock', q: 'rock clássico' },
+  { label: 'Pop', q: 'pop hits' },
+  { label: 'MPB', q: 'mpb' },
+  { label: 'Anos 80', q: 'músicas anos 80' },
+];
 const current = () => S.queue[S.index] || null;
 
 /* ---------- inicialização ---------- */
@@ -55,6 +73,9 @@ async function boot() {
   injectTemplates();
   bindEvents();
   initPwa();
+  initAutoFullscreen();
+  GPS.initGps({ toast, duck });
+  $('#split').classList.toggle('dock-left', store.get('dockLeft', false));
 
   const clientId = CONFIG.GOOGLE_CLIENT_ID || store.get('clientId');
   if (!clientId) return showScreen('setup');
@@ -113,6 +134,24 @@ function enterApp() {
   } else {
     authExpired();
   }
+}
+
+/* ---------- tela cheia automática quando aberto pelo app (APK / ícone instalado) ---------- */
+// O navegador só entra em tela cheia após um toque; então, aberto como app,
+// qualquer toque recoloca a tela cheia (ela sai ao trocar de app ou girar a tela).
+function initAutoFullscreen() {
+  const installed = window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+  let fromApp = installed || new URLSearchParams(location.search).get('source') === 'app';
+  try {
+    if (fromApp) sessionStorage.setItem('fromApp', '1');
+    else fromApp = sessionStorage.getItem('fromApp') === '1';
+  } catch { /* sem storage */ }
+  if (!fromApp || !document.documentElement.requestFullscreen) return;
+  document.documentElement.classList.add('from-app');
+  document.addEventListener('pointerdown', () => {
+    if (document.fullscreenElement) return;
+    document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+  }, true);
 }
 
 function injectTemplates() {
@@ -243,7 +282,13 @@ function onClick(e) {
     case 'queue-clear': clearQueue(); break;
     case 'open-playlist': openPlaylist(id); break;
     case 'shuffle-liked': shuffleLiked(); break;
-    case 'voice': startVoice(); break;
+    case 'voice': startVoice(el); break;
+    case 'voice-dest': voiceDestination(el); break;
+    case 'gps': openSplit(); break;
+    case 'gps-close': closeSplit(); break;
+    case 'gps-swap': swapSplit(); break;
+    case 'mood': openMood(i); break;
+    case 'mood-play': playMood(i); break;
     case 'search-chip': doSearch(q); break;
     case 'back': navigate(S.backTo || 'library'); break;
     case 'fullscreen': toggleFullscreen(); break;
@@ -267,14 +312,15 @@ function onClick(e) {
 
 /* ---------- navegação ---------- */
 function navigate(view, opts = {}) {
-  if (view !== 'playlist' && view !== 'playing') S.backTo = view;
+  const sub = view === 'playlist' || view === 'mood';
+  if (!sub && view !== 'playing') S.backTo = view;
   S.view = view;
   $$('.view').forEach((v) => { v.hidden = v.dataset.view !== view; });
   $$('.rail-btn').forEach((b) => {
-    b.classList.toggle('active', b.dataset.nav === view || (view === 'playlist' && b.dataset.nav === 'library'));
+    b.classList.toggle('active', b.dataset.nav === view || (sub && b.dataset.nav === S.backTo));
   });
   $('#view-title').textContent = opts.title || TITLES[view];
-  $('#btn-back').hidden = view !== 'playlist';
+  $('#btn-back').hidden = !sub;
   $('#app').dataset.view = view;
   $('#mini').hidden = !current() || view === 'playing';
   $('#menu').hidden = true;
@@ -324,7 +370,7 @@ function placePlayer() {
   fitSlots();
   const wrap = $('#player-wrap');
   const hide = () => { wrap.style.cssText = 'left:-10000px;top:0;width:320px;height:180px'; };
-  if (!current() || $('#app').hidden || S.view !== 'playing') return hide();
+  if (!current() || $('#app').hidden || S.split || S.view !== 'playing') return hide();
   const videoVisible = S.mode === 'video' || (S.mode === 'cover' && S.showVideo);
   if (!videoVisible) return hide();
   const slot = $(`#slot-${S.mode}`);
@@ -550,6 +596,7 @@ function updateNowPlaying() {
   $('#np-bg').style.backgroundImage = t ? `url("${t.thumb}")` : '';
   document.documentElement.style.setProperty('--cover', t ? `url("${t.thumb}")` : 'none');
   $$('.track[data-id]').forEach((li) => li.classList.toggle('is-current', li.dataset.id === t?.id));
+  renderDockNext();
   Media.setMeta(t);
   if (S.view === 'home') renderHome();
   requestAnimationFrame(placePlayer);
@@ -570,11 +617,6 @@ function updateButtons() {
 }
 
 /* ---------- telas ---------- */
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-}
-
 const loadingBlock = (txt = 'Carregando…') => `<div class="state"><div class="spinner"></div><p>${esc(txt)}</p></div>`;
 const emptyBlock = (txt) => `<div class="state"><p>${esc(txt)}</p></div>`;
 
@@ -618,86 +660,206 @@ function trackRows(tracks, listKey) {
     </li>`).join('')}</ul>`;
 }
 
+// Tela inicial no estilo do YouTube Music: chips de humor, "Ouvir de novo",
+// "Escolhas rápidas", mixes, "Da sua biblioteca" (só playlists de música) e sugestões.
+function squareCard(t, listKey, i) {
+  return `<button class="card sq" data-action="play-from" data-list="${listKey}" data-index="${i}">
+    <div class="card-img"><img loading="lazy" src="${esc(t.thumb)}" alt=""></div>
+    <span class="card-t">${esc(t.title)}</span>
+    <span class="card-s">${esc(t.artist)}</span>
+  </button>`;
+}
+
+function quickRow(t, listKey, i) {
+  return `<button class="qp" data-action="play-from" data-list="${listKey}" data-index="${i}">
+    <img loading="lazy" src="${esc(t.thumb)}" alt="">
+    <span class="qp-text"><span class="qp-t">${esc(t.title)}</span><span class="qp-a">${esc(t.artist)}</span></span>
+  </button>`;
+}
+
+// Embaralhamento estável durante o dia (a lista não muda a cada renderização).
+function dailyShuffle(arr) {
+  let seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function quickPicks(hide, recent) {
+  const recentIds = new Set(recent.slice(0, 20).map((t) => t.id));
+  const liked = S.playlistCache.get('liked') || [];
+  const pool = [...liked, ...mostPlayed(40, hide)].filter((t) => !recentIds.has(t.id) && !hide.has(t.id));
+  const seen = new Set();
+  return dailyShuffle(pool.filter((t) => !seen.has(t.id) && seen.add(t.id))).slice(0, 16);
+}
+
+function sectionHead(title, { kicker = '', action = '' } = {}) {
+  return `<div class="section-head">
+    <div>${kicker ? `<p class="kicker">${esc(kicker)}</p>` : ''}<h2>${esc(title)}</h2></div>${action}</div>`;
+}
+
 function renderHome() {
   const el = $('#view-home');
-  const name = (S.profile?.name || '').split(' ')[0];
-  const t = current();
   const hide = nonMusic();
   const recent = store.get('recent', []).filter((t) => !hide.has(t.id));
-  lists.recent = recent;
 
-  let html = `<p class="greet">${greeting()}${name ? `, ${esc(name)}` : ''}</p>`;
+  let html = `<div class="chips mood-chips">${MOODS.map((m, i) =>
+    `<button class="chip" data-action="mood" data-index="${i}">${esc(m.label)}</button>`).join('')}</div>`;
 
-  if (t) {
-    html += `<button class="resume" data-nav="playing">
-      <img src="${esc(t.thumb)}" alt="">
-      <span class="resume-text">
-        <span class="eyebrow">${S.playing ? 'Tocando agora' : 'Continuar ouvindo'}</span>
-        <span class="resume-t">${esc(t.title)}</span>
-        <span class="resume-a">${esc(t.artist)}</span>
-      </span>
-      <span class="resume-play">${icon(S.playing ? 'now' : 'play')}</span>
-    </button>`;
+  // Ouvir de novo: tocadas recentemente + mais tocadas, em grade de duas linhas.
+  const again = [];
+  const seenAgain = new Set();
+  [...recent, ...mostPlayed(20, hide)].forEach((t) => { if (!seenAgain.has(t.id)) { seenAgain.add(t.id); again.push(t); } });
+  lists.again = again.slice(0, 20);
+  if (lists.again.length) {
+    html += sectionHead('Ouvir de novo', { kicker: S.profile?.name || '' });
+    html += `<div class="row-scroll two-rows">${lists.again.map((t, i) => squareCard(t, 'again', i)).join('')}</div>`;
   }
 
-  html += `<div class="tiles">
-    <button class="tile tile-accent" data-action="open-playlist" data-id="liked">${icon('heart')}<span>Músicas curtidas</span></button>
-    <button class="tile" data-action="voice">${icon('mic')}<span>Buscar por voz</span></button>
-    <button class="tile" data-action="shuffle-liked">${icon('shuffle')}<span>Aleatório das curtidas</span></button>
-  </div>`;
+  // Escolhas rápidas: colunas de 4 músicas das suas curtidas e mais tocadas.
+  lists.quick = quickPicks(hide, recent);
+  if (lists.quick.length >= 4) {
+    html += sectionHead('Escolhas rápidas', {
+      kicker: 'Comece a ouvir',
+      action: `<button class="btn btn-sm" data-action="play-list" data-list="quick">${icon('play')}Tocar tudo</button>`,
+    });
+    html += `<div class="row-scroll quick-grid">${lists.quick.map((t, i) => quickRow(t, 'quick', i)).join('')}</div>`;
+  }
 
   const mixes = S.recs?.mixes || [];
   if (mixes.length) {
-    html += `<div class="section-head"><h2>Mixes para você</h2></div>
-      <div class="row-scroll">${mixes.map(mixCard).join('')}</div>`;
+    html += sectionHead('Mixes para você');
+    html += `<div class="row-scroll">${mixes.map(mixCard).join('')}</div>`;
   }
 
-  html += `<div class="section-head"><h2>Suas playlists</h2><button class="link" data-nav="library">Ver todas</button></div>`;
+  html += sectionHead('Da sua biblioteca', { action: '<button class="link" data-nav="library">Ver tudo</button>' });
+  const pls = musicPlaylists();
+  html += `<div class="row-scroll">${likedCard()}${pls.slice(0, 14).map(playlistCard).join('')}</div>`;
   if (!S.playlists) html += loadingBlock('Carregando playlists…');
-  else if (!S.playlists.length) html += emptyBlock('Você ainda não tem playlists.');
-  else html += `<div class="row-scroll">${S.playlists.slice(0, 12).map(playlistCard).join('')}</div>`;
+  else if (S.classifying) html += `<p class="hint">Separando suas playlists de música…</p>`;
 
   const recPls = S.recs?.playlists || [];
-  html += `<div class="section-head"><h2>Playlists para você</h2>
-    <button class="icon-btn" data-action="recs-refresh" aria-label="Atualizar sugestões" ${S.recsLoading ? 'disabled' : ''}>${icon('refresh')}</button></div>`;
+  html += sectionHead('Playlists para você', {
+    action: `<button class="icon-btn" data-action="recs-refresh" aria-label="Atualizar sugestões" ${S.recsLoading ? 'disabled' : ''}>${icon('refresh')}</button>`,
+  });
   if (recPls.length) html += `<div class="row-scroll">${recPls.map(playlistCard).join('')}</div>`;
   else if (S.recsLoading) html += loadingBlock('Montando sugestões com base no seu gosto…');
   else html += emptyBlock(mixes.length
     ? 'Nenhuma sugestão agora. Toque em atualizar para tentar de novo.'
     : 'Curta ou toque algumas músicas para receber sugestões.');
 
-  const top = mostPlayed(15, hide);
-  lists.top = top;
-  if (top.length >= 3) {
-    html += `<div class="section-head"><h2>Suas mais tocadas</h2>
-      <button class="link" data-action="play-list" data-list="top">Tocar todas</button></div>
-      <div class="row-scroll">${top.map((r, i) => trackCard(r, 'top', i)).join('')}</div>`;
-  }
-
-  if (recent.length) {
-    html += `<div class="section-head"><h2>Tocadas recentemente</h2></div>
-      <div class="row-scroll">${recent.slice(0, 15).map((r, i) => trackCard(r, 'recent', i)).join('')}</div>`;
-  }
   el.innerHTML = html;
+}
+
+function likedCard() {
+  return `<button class="card" data-action="open-playlist" data-id="liked">
+    <div class="card-img liked">${icon('heart')}</div>
+    <span class="card-t">Músicas curtidas</span><span class="card-s">Playlist automática</span>
+  </button>`;
 }
 
 function renderLibrary() {
   const el = $('#view-library');
-  let html = `<div class="grid">
-    <button class="card" data-action="open-playlist" data-id="liked">
-      <div class="card-img liked">${icon('heart')}</div>
-      <span class="card-t">Músicas curtidas</span><span class="card-s">Automática</span>
-    </button>`;
-  if (S.playlists) html += S.playlists.map(playlistCard).join('');
-  html += `</div>`;
+  const pls = musicPlaylists();
+  const hidden = (S.playlists?.length || 0) - pls.length;
+  let html = `<div class="grid">${likedCard()}${pls.map(playlistCard).join('')}</div>`;
   if (!S.playlists) html += loadingBlock('Carregando playlists…');
+  else if (S.classifying) html += `<p class="hint">Separando suas playlists de música…</p>`;
+  else if (hidden > 0 && YT.isMusicOnly()) {
+    html += `<p class="hint">${hidden} ${hidden === 1 ? 'playlist de vídeos oculta' : 'playlists de vídeos ocultas'} pelo filtro "Somente músicas".</p>`;
+  }
   el.innerHTML = html;
+}
+
+/* ---------- playlists de música x de vídeo ---------- */
+// Cada playlist é avaliada por uma amostra (2 unidades de cota) e o resultado fica guardado;
+// só é refeito se a quantidade de itens mudar ou após 7 dias.
+function musicPlaylists() {
+  const all = (S.playlists || []).filter((p) => p.count > 0);
+  if (!YT.isMusicOnly()) return all;
+  const cache = store.get('plMusic', {});
+  return all.filter((p) => (cache[p.id]?.ratio ?? 0) >= 0.6);
+}
+
+async function classifyPlaylists() {
+  if (!YT.isMusicOnly() || !S.playlists?.length || !getToken() || S.classifying) return;
+  const cache = store.get('plMusic', {});
+  const week = 7 * 86400_000;
+  const todo = S.playlists.filter((p) => p.count > 0
+    && (!cache[p.id] || cache[p.id].count !== p.count || Date.now() - cache[p.id].at > week));
+  if (!todo.length) return;
+  S.classifying = true;
+  if (S.view === 'home') renderHome();
+  if (S.view === 'library') renderLibrary();
+  try {
+    for (let i = 0; i < todo.length; i += 4) {
+      await Promise.all(todo.slice(i, i + 4).map(async (p) => {
+        try {
+          cache[p.id] = { ratio: await YT.playlistMusicRatio(p.id), count: p.count, at: Date.now() };
+        } catch (e) {
+          if (e instanceof AuthError) throw e;
+        }
+      }));
+    }
+  } catch (e) {
+    if (e instanceof AuthError) authExpired();
+  } finally {
+    store.set('plMusic', cache);
+    S.classifying = false;
+    if (S.view === 'home') renderHome();
+    if (S.view === 'library') renderLibrary();
+  }
+}
+
+/* ---------- humores (chips do topo) ---------- */
+async function openMood(i) {
+  const m = MOODS[i];
+  if (!m) return;
+  navigate('mood', { title: m.label });
+  const el = $('#view-mood');
+  el.dataset.index = String(i);
+  const head = `<div class="mood-head">
+      <h2>${esc(m.label)}</h2>
+      <button class="btn btn-primary btn-lg" data-action="mood-play" data-index="${i}">${icon('play')}Tocar mix ${esc(m.label.toLowerCase())}</button>
+    </div>`;
+
+  const cache = store.get('moods', {});
+  let pls = cache[m.q] && Date.now() - cache[m.q].at < 86400_000 ? cache[m.q].playlists : null;
+  if (!pls) {
+    el.innerHTML = head + loadingBlock('Buscando playlists…');
+    pls = await guard(() => YT.searchPlaylists(`${m.q} playlist`, 12));
+    if (S.view !== 'mood' || el.dataset.index !== String(i)) return;
+    if (!pls) { el.innerHTML = head + emptyBlock('Não foi possível buscar agora.'); return; }
+    pls = pls.filter((p) => p.count >= 8);
+    cache[m.q] = { at: Date.now(), playlists: pls };
+    store.set('moods', cache);
+  }
+  // Os cards abrem pela lista de sugestões; registramos para o cabeçalho da playlist achar o título.
+  S.moodPlaylists = pls;
+  el.innerHTML = head + (pls.length
+    ? `<div class="grid">${pls.map(playlistCard).join('')}</div>`
+    : emptyBlock('Nenhuma playlist encontrada.'));
+}
+
+async function playMood(i) {
+  const m = MOODS[i];
+  if (!m) return;
+  toast(`Montando o mix ${m.label.toLowerCase()}…`);
+  const tracks = await guard(() => YT.search(m.q));
+  if (!tracks?.length) { toast('Não foi possível montar o mix agora.'); return; }
+  playList(tracks, 0, { shuffle: true });
+  if (!S.split) navigate('playing');
 }
 
 async function openPlaylist(id) {
   const meta = id === 'liked'
     ? { title: 'Músicas curtidas', thumb: '' }
-    : S.playlists?.find((p) => p.id === id) || S.recs?.playlists?.find((p) => p.id === id) || { title: 'Playlist', thumb: '' };
+    : [...(S.playlists || []), ...(S.recs?.playlists || []), ...(S.moodPlaylists || [])].find((p) => p.id === id)
+      || { title: 'Playlist', thumb: '' };
   navigate('playlist', { title: meta.title });
   const el = $('#view-playlist');
   el.dataset.id = id;
@@ -742,7 +904,9 @@ function toggleMusicOnly() {
   S.playlistCache.clear();
   if (S.view === 'playlist') openPlaylist($('#view-playlist').dataset.id);
   if (S.view === 'search' && $('#search-input').value.trim()) doSearch($('#search-input').value);
-  if (getToken()) loadRecommendations();
+  if (S.view === 'home') renderHome();
+  if (S.view === 'library') renderLibrary();
+  if (getToken()) { loadRecommendations(); classifyPlaylists(); }
 }
 
 async function shuffleLiked() {
@@ -755,7 +919,7 @@ async function shuffleLiked() {
   }
   lists['pl:liked'] = tracks;
   playList(tracks, 0, { shuffle: true });
-  navigate('playing');
+  if (!S.split) navigate('playing');
 }
 
 /* ---------- recomendações ---------- */
@@ -954,50 +1118,128 @@ async function doSearch(query, { autoplay = false } = {}) {
   body.innerHTML = res.length ? trackRows(res, 'search') : emptyBlock('Nenhum resultado.');
   if (autoplay && res.length) {
     playList(res, 0);
-    navigate('playing');
+    if (!S.split) navigate('playing');
   }
 }
 
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognizer = null;
 
-function startVoice() {
+// Reconhecimento de voz genérico (música ou destino do GPS).
+function listen(button, { onInterim, onFinal }) {
   if (!SpeechRec) { toast('Busca por voz não é suportada neste navegador.'); return; }
   if (recognizer) { recognizer.abort(); return; }
-  if (S.view !== 'search') navigate('search');
-  const input = $('#search-input');
-  const mic = $('#btn-mic');
   recognizer = new SpeechRec();
   recognizer.lang = 'pt-BR';
   recognizer.interimResults = true;
   recognizer.maxAlternatives = 1;
   let finalText = '';
-  mic.classList.add('listening');
-  input.value = '';
-  input.placeholder = 'Fale: "tocar" + nome da música…';
+  let lastText = '';
+  button?.classList.add('listening');
   recognizer.onresult = (e) => {
     let txt = '';
     for (const r of e.results) {
       txt += r[0].transcript;
       if (r.isFinal) finalText = txt;
     }
-    input.value = txt;
+    lastText = txt;
+    onInterim?.(txt);
   };
   recognizer.onerror = (e) => {
-    if (e.error === 'not-allowed') toast('Permita o uso do microfone para buscar por voz.');
+    if (e.error === 'not-allowed') toast('Permita o uso do microfone para usar a voz.');
     else if (e.error !== 'no-speech' && e.error !== 'aborted') toast(`Erro no microfone: ${e.error}`);
   };
   recognizer.onend = () => {
     recognizer = null;
-    mic.classList.remove('listening');
-    input.placeholder = 'Música, artista ou álbum';
-    const spoken = (finalText || input.value).trim();
-    if (!spoken) return;
-    // "tocar Coldplay Yellow" → toca o primeiro resultado direto
-    const cmd = spoken.match(/^(tocar|toca|toque|ouvir|play|coloca|coloque|bota)\s+(.+)/i);
-    doSearch(cmd ? cmd[2] : spoken, { autoplay: true });
+    button?.classList.remove('listening');
+    onFinal((finalText || lastText).trim());
   };
   recognizer.start();
+}
+
+function startVoice(btn) {
+  const input = $('#search-input');
+  if (!S.split && S.view !== 'search') navigate('search');
+  if (S.split) toast('Ouvindo… diga o nome da música');
+  input.value = '';
+  input.placeholder = 'Fale: "tocar" + nome da música…';
+  listen(S.split ? btn : $('#btn-mic'), {
+    onInterim: (txt) => { input.value = txt; },
+    onFinal: (spoken) => {
+      input.placeholder = 'Música, artista ou álbum';
+      if (!spoken) return;
+      // "tocar Coldplay Yellow" → toca o primeiro resultado direto
+      const cmd = spoken.match(/^(tocar|toca|toque|ouvir|play|coloca|coloque|bota)\s+(.+)/i);
+      doSearch(cmd ? cmd[2] : spoken, { autoplay: true });
+    },
+  });
+}
+
+function voiceDestination(btn) {
+  const input = $('#map-q');
+  input.placeholder = 'Fale o destino…';
+  listen(btn, {
+    onInterim: (txt) => { input.value = txt; },
+    onFinal: (spoken) => {
+      input.placeholder = 'Para onde vamos?';
+      if (!spoken) return;
+      const cmd = spoken.match(/^(ir para|ir pra|me leve para|me leva pra|navegar para|rota para)\s+(.+)/i);
+      GPS.searchDestination(cmd ? cmd[2] : spoken);
+    },
+  });
+}
+
+/* ---------- tela dividida: GPS + música ---------- */
+function openSplit() {
+  S.split = true;
+  $('#split').hidden = false;
+  document.body.classList.add('split-on');
+  $('#menu').hidden = true;
+  renderDockNext();
+  Media.keepAwake('gps', true);
+  placePlayer();
+  GPS.openGps();
+}
+
+function closeSplit() {
+  S.split = false;
+  $('#split').hidden = true;
+  document.body.classList.remove('split-on');
+  // Com navegação ativa a voz continua guiando e a tela continua acesa.
+  if (!GPS.isNavigating()) Media.keepAwake('gps', false);
+  GPS.closeGps();
+  placePlayer();
+}
+
+function swapSplit() {
+  const left = !$('#split').classList.contains('dock-left');
+  $('#split').classList.toggle('dock-left', left);
+  store.set('dockLeft', left);
+}
+
+function renderDockNext() {
+  const el = $('#dock-next');
+  if (!el) return;
+  const upcoming = S.queue.slice(S.index + 1, S.index + 4);
+  el.innerHTML = upcoming.length
+    ? `<p class="dock-label">A seguir</p>${upcoming.map((t, k) => `
+      <button class="qp" data-action="jump" data-index="${S.index + 1 + k}">
+        <img loading="lazy" src="${esc(t.thumb)}" alt="">
+        <span class="qp-text"><span class="qp-t">${esc(t.title)}</span><span class="qp-a">${esc(t.artist)}</span></span>
+      </button>`).join('')}`
+    : '';
+}
+
+// Abaixa a música enquanto o GPS fala.
+let duckedFrom = null;
+function duck(on) {
+  if (on && duckedFrom === null) {
+    duckedFrom = Player.getVolume();
+    Player.setVolume(Math.min(duckedFrom, 25));
+  } else if (!on && duckedFrom !== null) {
+    Player.setVolume(duckedFrom);
+    duckedFrom = null;
+  }
 }
 
 /* ---------- letras ---------- */
@@ -1058,7 +1300,9 @@ function updateLyricHighlight(time) {
   const el = $('#lyrics');
   el.querySelector('.ly.active')?.classList.remove('active');
   el.querySelector(`.ly[data-i="${i}"]`)?.classList.add('active');
-  $('#cover-lyric').textContent = i >= 0 ? lines[i].text || '♪' : '';
+  const lineText = i >= 0 ? lines[i].text || '♪' : '';
+  $('#cover-lyric').textContent = lineText;
+  $('#dock-lyric').textContent = lineText;
   if (S.view === 'playing' && S.mode === 'lyrics') scrollToActive();
 }
 
@@ -1145,12 +1389,14 @@ async function loadPlaylists() {
   }
   if (S.view === 'home') renderHome();
   if (S.view === 'library') renderLibrary();
+  classifyPlaylists();
 }
 
 function logout() {
   if (!confirm('Sair da sua conta do YouTube neste aparelho?')) return;
   signOut();
-  ['profile', 'playlists', 'session', 'recent', 'searches', 'plays', 'recs', 'musicChecked'].forEach((k) => store.remove(k));
+  ['profile', 'playlists', 'session', 'recent', 'searches', 'plays', 'recs', 'musicChecked', 'plMusic', 'moods']
+    .forEach((k) => store.remove(k));
   location.reload();
 }
 
@@ -1166,6 +1412,7 @@ function changeClient() {
 
 /* ---------- sessão / histórico ---------- */
 function saveSession(time) {
+  renderDockNext();
   const t = current();
   if (!t) { store.remove('session'); return; }
   const playedHere = Player.loadedId === t.id && S.ytState !== 5 && S.ytState !== -1;

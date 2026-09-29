@@ -6,7 +6,16 @@
 // na própria página para que ela "possua" a sessão de mídia e receba os comandos.
 let silent = null;
 let wakeLock = null;
-let wantAwake = false;
+// Motivos para manter a tela acesa: música tocando e/ou GPS aberto.
+const awakeReasons = new Set();
+const wantAwake = () => awakeReasons.size > 0;
+
+export function keepAwake(reason, on) {
+  if (on) awakeReasons.add(reason);
+  else awakeReasons.delete(reason);
+  if (wantAwake()) requestWake();
+  else releaseWake();
+}
 
 function silentWavUrl(seconds = 10) {
   const rate = 8000;
@@ -31,7 +40,7 @@ export function initMedia(handlers) {
     }
   }
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && wantAwake) requestWake();
+    if (document.visibilityState === 'visible' && wantAwake()) requestWake();
   });
 }
 
@@ -41,9 +50,7 @@ export function setPlaying(playing) {
     else silent.pause();
   }
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
-  wantAwake = playing;
-  if (playing) requestWake();
-  else releaseWake();
+  keepAwake('play', playing);
 }
 
 export function setMeta(track) {

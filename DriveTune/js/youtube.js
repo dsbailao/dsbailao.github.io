@@ -118,6 +118,16 @@ export async function getPlaylists() {
   }));
 }
 
+// Fração de músicas numa amostra da playlist (2 unidades de cota), para separar
+// playlists de música das de vídeos na tela inicial.
+export async function playlistMusicRatio(id, sample = 15) {
+  const data = await call('playlistItems', { part: 'snippet', playlistId: id, maxResults: sample });
+  const ids = (data.items || []).map((i) => i.snippet?.resourceId?.videoId).filter(Boolean);
+  if (!ids.length) return 0;
+  const keep = await musicIds(ids);
+  return keep.size / ids.length;
+}
+
 export async function getPlaylistTracks(id, limit = 500) {
   const items = await paginate('playlistItems', { part: 'snippet', playlistId: id }, limit);
   const tracks = items

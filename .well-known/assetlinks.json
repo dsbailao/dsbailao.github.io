@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.dsbailao.twa",
+        "sha256_cert_fingerprints": ["90:9E:B7:28:87:0E:22:34:D1:76:FE:84:5A:96:02:A1:30:2F:BC:EC:D2:35:90:9C:58:E4:86:BB:C1:84:C5:9A"]
+      }
+    }]

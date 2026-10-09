@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Certificado UPDATE sem WHERE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Great+Vibes&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #2b2b33;
+      --papel: #fbf6e9;
+      --tinta: #2c2416;
+      --ouro: #b08d3c;
+      --ouro-escuro: #7d6122;
+      --vermelho: #9b2226;
+      --painel: #1e1e24;
+      --painel-txt: #e9e6df;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'EB Garamond', Georgia, serif;
+      color: var(--tinta);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+      gap: 24px;
+    }
+
+    /* ---------- Painel de edição ---------- */
+    .painel {
+      width: 100%;
+      max-width: 1000px;
+      background: var(--painel);
+      color: var(--painel-txt);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+    }
+    .painel label { display: flex; flex-direction: column; gap: 4px; }
+    .painel input {
+      background: #2d2d36;
+      border: 1px solid #44444f;
+      color: inherit;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 15px;
+    }
+    .painel input:focus { outline: 2px solid var(--ouro); border-color: transparent; }
+    .acoes { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
+    .acoes button {
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--ouro);
+      color: #1b1407;
+    }
+    .acoes button.sec { background: #3a3a45; color: var(--painel-txt); }
+    .acoes .aviso { margin-left: auto; align-self: center; opacity: .7; font-size: 13px; }
+
+    /* ---------- Certificado ---------- */
+    .wrap { width: 100%; max-width: 1000px; }
+    .certificado {
+      position: relative;
+      aspect-ratio: 1.414 / 1;
+      background:
+        radial-gradient(ellipse at center, transparent 55%, rgba(176,141,60,.12) 100%),
+        var(--papel);
+      padding: 2.4%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      container-type: inline-size;
+    }
+    .moldura {
+      position: relative;
+      height: 100%;
+      border: 0.6cqw solid var(--ouro);
+      outline: 0.15cqw solid var(--ouro-escuro);
+      outline-offset: -1.2cqw;
+      padding: 3.5cqw 6cqw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .canto {
+      position: absolute;
+      width: 7cqw; height: 7cqw;
+      border: 0.35cqw solid var(--ouro);
+    }
+    .canto.tl { top: 1.8cqw; left: 1.8cqw; border-right: 0; border-bottom: 0; }
+    .canto.tr { top: 1.8cqw; right: 1.8cqw; border-left: 0; border-bottom: 0; }
+    .canto.bl { bottom: 1.8cqw; left: 1.8cqw; border-right: 0; border-top: 0; }
+    .canto.br { bottom: 1.8cqw; right: 1.8cqw; border-left: 0; border-top: 0; }
+
+    .marca-dagua {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14cqw;
+      font-weight: 500;
+      color: rgba(155,34,38,.05);
+      transform: rotate(-18deg);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .titulo {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 5.2cqw;
+      letter-spacing: .4cqw;
+      color: var(--ouro-escuro);
+      margin: 0;
+      line-height: 1.05;
+    }
+    .subtitulo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.9cqw;
+      letter-spacing: .3cqw;
+      margin: .6cqw 0 0;
+    }
+    .subtitulo code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--vermelho);
+      letter-spacing: 0;
+    }
+    .ornamento { color: var(--ouro); font-size: 2cqw; margin: 1.2cqw 0; letter-spacing: 1cqw; }
+    .texto { font-size: 1.85cqw; margin: 0; line-height: 1.45; }
+    .nome {
+      font-family: 'Great Vibes', cursive;
+      font-size: 6.4cqw;
+      line-height: 1.15;
+      margin: .4cqw 0 0;
+      padding: 0 4cqw;
+      border-bottom: 0.12cqw solid var(--ouro);
+      min-width: 50%;
+    }
+    .empresa { font-weight: 600; font-style: italic; }
+    .sql {
+      margin: 1.4cqw 0 .3cqw;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.55cqw;
+      background: rgba(44,36,22,.06);
+      border-left: 0.4cqw solid var(--vermelho);
+      padding: .8cqw 1.6cqw;
+      text-align: left;
+    }
+    .sql .kw { color: #1d4e89; font-weight: 500; }
+    .sql .str { color: #2d6a4f; }
+    .sql .falta { color: var(--vermelho); text-decoration: line-through wavy; opacity: .55; }
+    .linhas { font-size: 1.5cqw; color: var(--vermelho); font-style: italic; margin: 0; }
+
+    .rodape {
+      margin-top: auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 3cqw;
+    }
+    .assinatura { font-size: 1.45cqw; line-height: 1.3; }
+    .assinatura .rabisco {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3cqw;
+      line-height: 1;
+      border-bottom: 0.12cqw solid var(--tinta);
+      padding-bottom: .3cqw;
+      margin-bottom: .5cqw;
+    }
+    .selo {
+      width: 13cqw; height: 13cqw;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #d9534f, var(--vermelho) 60%, #6a1518);
+      color: #fbe9d2;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 1.15cqw;
+      line-height: 1.2;
+      box-shadow: 0 0 0 .5cqw #fbf6e9, 0 0 0 .8cqw var(--vermelho), 0 .6cqw 1.2cqw rgba(0,0,0,.25);
+      transform: rotate(-12deg);
+      padding: 1.5cqw;
+    }
+    .selo b { display: block; font-size: 2.6cqw; }
+    .meta { font-size: 1.25cqw; opacity: .7; margin-top: 1.2cqw; }
+
+    @media print {
+      @page { size: A4 landscape; margin: 0; }
+      body { background: none; padding: 0; }
+      .painel { display: none; }
+      .wrap { max-width: none; width: 297mm; }
+      .certificado { box-shadow: none; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <form class="painel" id="form" onsubmit="return false">
+    <label>Nome do(a) homenageado(a)
+      <input id="inNome" value="Fulano de Tal" maxlength="60" />
+    </label>
+    <label>Empresa
+      <input id="inEmpresa" value="Empresa Exemplo S.A." maxlength="60" />
+    </label>
+    <label>Tabela vitimada
+      <input id="inTabela" value="tblCliente" maxlength="40" />
+    </label>
+    <label>Linhas afetadas
+      <input id="inLinhas" type="number" min="1" value="1482337" />
+    </label>
+    <label>Data do incidente
+      <input id="inData" type="date" />
+    </label>
+    <div class="acoes">
+      <button type="button" id="btImprimir">🖨️ Imprimir / Salvar PDF</button>
+      <button type="button" class="sec" id="btLink">🔗 Copiar link</button>
+      <span class="aviso" id="aviso">Nenhum banco foi ferido na criação deste certificado.</span>
+    </div>
+  </form>
+
+  <div class="wrap">
+    <div class="certificado">
+      <div class="moldura">
+        <div class="marca-dagua">ROLLBACK?</div>
+        <span class="canto tl"></span><span class="canto tr"></span>
+        <span class="canto bl"></span><span class="canto br"></span>
+
+        <h1 class="titulo">Certificado</h1>
+        <p class="subtitulo">de Primeiro <code>UPDATE</code> sem <code>WHERE</code></p>
+        <div class="ornamento">❖ ❖ ❖</div>
+
+        <p class="texto">Certificamos, para os devidos fins (e para a eterna lembrança da equipe), que</p>
+        <p class="nome" id="outNome"></p>
+        <p class="texto" style="margin-top:1.2cqw">
+          colaborador(a) da <span class="empresa" id="outEmpresa"></span>, executou com coragem,
+          confiança e absolutamente nenhuma transação aberta, o lendário comando:
+        </p>
+
+        <div class="sql">
+          <span class="kw">UPDATE</span> <span id="outTabela"></span> <span class="kw">SET</span> Nome = <span class="str">'Teste'</span><span class="falta"> WHERE Codigo = 1</span>;
+        </div>
+        <p class="linhas">(<span id="outLinhas"></span> linhas afetadas) — Tempo de reação até o pânico: 0,3 segundos</p>
+
+        <div class="rodape">
+          <div class="assinatura">
+            <div class="rabisco">O DBA de Plantão</div>
+            DBA de Plantão<br />Restaurador Oficial de Backups
+          </div>
+          <div class="selo"><div><b>100%</b>DAS LINHAS<br />ATUALIZADAS</div></div>
+          <div class="assinatura">
+            <div class="rabisco">Ctrl + Z</div>
+            Ctrl + Z<br />Que infelizmente não funciona aqui
+          </div>
+        </div>
+        <div class="meta" id="outMeta"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const campos = { nome: 'inNome', empresa: 'inEmpresa', tabela: 'inTabela', linhas: 'inLinhas', data: 'inData' };
+
+    // Preenche a partir da URL (?nome=...&empresa=...) para o link compartilhável.
+    const params = new URLSearchParams(location.search);
+    for (const [chave, id] of Object.entries(campos)) {
+      if (params.has(chave)) $(id).value = params.get(chave);
+    }
+    if (!$('inData').value) $('inData').value = new Date().toISOString().slice(0, 10);
+
+    function render() {
+      $('outNome').textContent = $('inNome').value || '—';
+      $('outEmpresa').textContent = $('inEmpresa').value || '—';
+      $('outTabela').textContent = $('inTabela').value || 'tblCliente';
+      $('outLinhas').textContent = Number($('inLinhas').value || 1).toLocaleString('pt-BR');
+      const [a, m, d] = ($('inData').value || '').split('-');
+      const data = a ? new Date(a, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+      const reg = String(Math.abs([...($('inNome').value + $('inEmpresa').value)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7))).padStart(6, '0').slice(0, 6);
+      $('outMeta').textContent = `Emitido em ${data} · Registro nº ${reg} · Backup mais recente: nunca`;
+    }
+
+    $('form').addEventListener('input', render);
+    $('btImprimir').addEventListener('click', () => window.print());
+    $('btLink').addEventListener('click', async () => {
+      const url = new URL(location.href.split('?')[0]);
+      for (const [chave, id] of Object.entries(campos)) url.searchParams.set(chave, $(id).value);
+      try {
+        await navigator.clipboard.writeText(url.toString());
+        $('aviso').textContent = 'Link copiado! Agora é só espalhar.';
+      } catch {
+        $('aviso').textContent = url.toString();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

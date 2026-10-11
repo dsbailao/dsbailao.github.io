@@ -1,6 +1,37 @@
-// Interações do portfólio: tema, menu, seção ativa, animação ao rolar e copiar e-mail.
+// Interações do portfólio: tema, menu, seção ativa, animação ao rolar, efeitos e easter egg.
 (function () {
   const root = document.documentElement;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Contador que sobe até o valor (data-count)
+  function countUp(el) {
+    if (reduceMotion) return;
+    const end = Number(el.dataset.count), t0 = performance.now(), dur = 1400;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))).toLocaleString('pt-BR');
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // Título que se "decodifica" ao aparecer
+  const GLYPHS = '01<>/{}[]#$%*+=_';
+  function scramble(el) {
+    if (reduceMotion) return;
+    const final = el.textContent, total = 28;
+    let frame = 0;
+    el.setAttribute('aria-label', final);
+    const step = () => {
+      frame++;
+      const shown = Math.floor((final.length * frame) / total);
+      el.textContent = final.slice(0, shown) + [...final.slice(shown)]
+        .map((c) => (c === ' ' ? ' ' : GLYPHS[(Math.random() * GLYPHS.length) | 0])).join('');
+      if (frame < total) requestAnimationFrame(step);
+      else { el.textContent = final; el.removeAttribute('aria-label'); }
+    };
+    requestAnimationFrame(step);
+  }
 
   // Tema claro/escuro (segue o sistema até o visitante escolher)
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
@@ -21,8 +52,24 @@
   nav.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
 
   // Borda do topo ao rolar
+  // + barra de progresso e HUD "query em execução"
   const topbar = document.querySelector('.topbar');
-  const onScroll = () => topbar.classList.toggle('scrolled', window.scrollY > 8);
+  const progress = document.getElementById('progress');
+  const steps = [...document.querySelectorAll('[data-scene]')];
+  const hudStep = document.getElementById('hud-step');
+  const hudName = document.getElementById('hud-name');
+  const hudPct = document.getElementById('hud-pct');
+  const onScroll = () => {
+    topbar.classList.toggle('scrolled', window.scrollY > 8);
+    const max = root.scrollHeight - window.innerHeight;
+    const p = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+    progress.style.transform = `scaleX(${p})`;
+    let idx = 0;
+    steps.forEach((s, i) => { if (s.getBoundingClientRect().top < window.innerHeight * 0.5) idx = i; });
+    hudStep.textContent = `${String(idx + 1).padStart(2, '0')}/${String(steps.length).padStart(2, '0')}`;
+    hudName.textContent = steps[idx].dataset.label;
+    hudPct.textContent = `${Math.round(p * 100)}%`;
+  };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
@@ -31,7 +78,12 @@
   if ('IntersectionObserver' in window) {
     const reveal = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
-        if (en.isIntersecting) { en.target.classList.add('in'); reveal.unobserve(en.target); }
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in');
+        en.target.querySelectorAll('[data-count]').forEach(countUp);
+        const title = en.target.querySelector('.section-head h2');
+        if (title) scramble(title);
+        reveal.unobserve(en.target);
       });
     }, { threshold: 0.12 });
     document.querySelectorAll('.reveal').forEach((el) => reveal.observe(el));
@@ -70,4 +122,47 @@
   });
 
   document.getElementById('year').textContent = now.getFullYear();
+
+  // Cards que inclinam em 3D seguindo o mouse
+  if (!reduceMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll('.project, .pillar, .work, .kpi, .stat, .stack-group, .side-card').forEach((card) => {
+      card.classList.add('tilt');
+      card.addEventListener('pointermove', (e) => {
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        const max = Math.min(1, 420 / r.width) * 8;
+        card.style.setProperty('--ry', `${(px - 0.5) * max}deg`);
+        card.style.setProperty('--rx', `${(0.5 - py) * max}deg`);
+        card.style.setProperty('--mx', `${px * 100}%`);
+        card.style.setProperty('--my', `${py * 100}%`);
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+      });
+    });
+  }
+
+  // Easter egg: Konami code, digitar "drop table" ou tocar 5 vezes no logo
+  const egg = document.getElementById('egg');
+  const KONAMI = 'arrowup,arrowup,arrowdown,arrowdown,arrowleft,arrowright,arrowleft,arrowright,b,a';
+  let keys = [], typed = '', taps = [];
+  function dropTable() {
+    if (egg.open) return;
+    window.dispatchEvent(new CustomEvent('drop-table'));
+    setTimeout(() => egg.showModal(), reduceMotion ? 0 : 700);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest?.('input, textarea, [contenteditable]')) return;
+    const k = e.key.toLowerCase();
+    keys = [...keys, k].slice(-10);
+    typed = (typed + (k.length === 1 ? k : '')).slice(-10);
+    if (keys.join() === KONAMI || typed === 'drop table') { keys = []; typed = ''; dropTable(); }
+  });
+  document.querySelector('.logo').addEventListener('click', () => {
+    const t = Date.now();
+    taps = [...taps.filter((x) => t - x < 2000), t];
+    if (taps.length >= 5) { taps = []; dropTable(); }
+  });
+  console.log('%c> psst: digite "drop table" em qualquer lugar da página.', 'color:#8b8bff;font-family:monospace');
 })();

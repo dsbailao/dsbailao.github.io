@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/site.css?v=7">
   <script>
     // Aplica o tema salvo antes de pintar a página (evita piscar).
     document.documentElement.classList.add('js');
@@ -71,6 +71,7 @@
       <nav class="nav" id="nav" aria-label="Seções">
         <a href="#sobre">Sobre</a>
         <a href="#experiencia">Experiência</a>
+        <a href="#entregas">Entregas</a>
         <a href="#projetos">Projetos</a>
         <a href="#stack">Tecnologias</a>
         <a href="#formacao">Formação</a>
@@ -90,7 +91,7 @@
 
   <main id="conteudo">
     <!-- ============ HERO ============ -->
-    <section class="hero wrap">
+    <section class="hero wrap" data-scene="db" data-label="início">
       <div class="hero-text">
         <p class="eyebrow mono">&gt; olá, mundo. eu sou</p>
         <h1>Daniel Soares <span class="grad">Bailão</span></h1>
@@ -137,7 +138,7 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
     </div>
 
     <!-- ============ SOBRE ============ -->
-    <section class="section wrap reveal" id="sobre">
+    <section class="section wrap reveal" id="sobre" data-scene="pillars" data-label="sobre">
       <div class="section-head">
         <p class="kicker mono">01 · sobre</p>
         <h2>Tecnologia a serviço do negócio</h2>
@@ -179,7 +180,7 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
     </section>
 
     <!-- ============ EXPERIÊNCIA ============ -->
-    <section class="section wrap reveal" id="experiencia">
+    <section class="section wrap reveal" id="experiencia" data-scene="helix" data-label="experiência">
       <div class="section-head">
         <p class="kicker mono">02 · experiência</p>
         <h2>Trajetória profissional</h2>
@@ -224,10 +225,218 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
       </div>
     </section>
 
-    <!-- ============ PROJETOS ============ -->
-    <section class="section wrap reveal" id="projetos">
+    <!-- ============ ENTREGAS ============ -->
+    <section class="section wrap reveal" id="entregas" data-scene="bars" data-label="entregas">
       <div class="section-head">
-        <p class="kicker mono">03 · projetos</p>
+        <p class="kicker mono">03 · entregas</p>
+        <h2>O trabalho em números</h2>
+        <p class="section-lead">
+          De 2022 a 2026, meu backlog no Azure DevOps da Solfarma reúne mais de mil entregas em todos os sistemas
+          do GS300: ERP, WMS, MOB, GFC, E-Commerce e Coletor.
+        </p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><strong data-count="1224">1.224</strong><span>itens de trabalho</span><small>590 tarefas · 402 PBIs · 224 bugs</small></div>
+        <div class="kpi"><strong data-count="1156">1.156</strong><span>itens concluídos</span><small>94% do total</small></div>
+        <div class="kpi"><strong data-count="361">361</strong><span>melhorias</span><small>além de 225 correções</small></div>
+        <div class="kpi"><strong data-count="38">38</strong><span>inovações</span><small>iniciativas novas no sistema</small></div>
+      </div>
+
+      <div class="charts">
+        <figure class="chart">
+          <figcaption>Itens criados por ano</figcaption>
+          <ul class="cols">
+            <li style="--v:271"><b>271</b><i></i><span>2022</span></li>
+            <li style="--v:259"><b>259</b><i></i><span>2023</span></li>
+            <li style="--v:294"><b>294</b><i></i><span>2024</span></li>
+            <li style="--v:233"><b>233</b><i></i><span>2025</span></li>
+            <li style="--v:167" class="partial"><b>167</b><i></i><span>2026*</span></li>
+          </ul>
+          <p class="chart-note">* até outubro de 2026</p>
+        </figure>
+        <figure class="chart">
+          <figcaption>PBIs e bugs por área de negócio</figcaption>
+          <ul class="bars">
+            <li style="--v:292"><span>Comercial</span><i></i><b>292</b></li>
+            <li style="--v:125"><span>Operacional</span><i></i><b>125</b></li>
+            <li style="--v:109"><span>TI</span><i></i><b>109</b></li>
+            <li style="--v:52"><span>Controladoria</span><i></i><b>52</b></li>
+            <li style="--v:47"><span>Financeiro</span><i></i><b>47</b></li>
+          </ul>
+        </figure>
+      </div>
+
+      <div class="lab" id="lab" data-plan="scan">
+        <div class="lab-head">
+          <div>
+            <p class="kicker mono">laboratório · plano de execução</p>
+            <h3>O mesmo SELECT, antes e depois do índice</h3>
+          </div>
+          <div class="lab-ctrl">
+            <div class="seg" role="radiogroup" aria-label="Plano de execução">
+              <button type="button" role="radio" aria-checked="true" data-plan-btn="scan">Sem índice</button>
+              <button type="button" role="radio" aria-checked="false" data-plan-btn="seek">Com índice</button>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="lab-run">▶ Executar</button>
+          </div>
+        </div>
+
+        <pre class="lab-sql mono"><span class="lab-idx"><span class="c-com">-- índice criado</span>
+<span class="c-key">CREATE NONCLUSTERED INDEX</span> SK01_NotaFiscalSaida
+    <span class="c-key">ON</span> dbo.NotaFiscalSaida (Situacao, DataEmissao)
+    <span class="c-key">INCLUDE</span> (Numero, Serie, Cliente);
+
+</span><span class="c-key">SELECT</span> nf.Numero, nf.Serie, nf.Cliente
+  <span class="c-key">FROM</span> dbo.NotaFiscalSaida nf <span class="c-key">WITH</span>(<span class="c-key">NOLOCK</span>)
+ <span class="c-key">WHERE</span> nf.Situacao = <span class="c-str">'A IMPRIMIR'</span>
+   <span class="c-key">AND</span> nf.DataEmissao &gt;= @Hoje;</pre>
+
+        <div class="lab-body">
+          <div class="lab-plan">
+            <div class="lab-op">
+              <span class="lab-op-ic" aria-hidden="true"><svg class="ic"><use href="#i-db"/></svg></span>
+              <div><b id="lab-op-name">Clustered Index Scan</b><small id="lab-op-desc"></small></div>
+            </div>
+            <svg class="lab-tree" viewBox="0 0 220 124" aria-hidden="true">
+              <g class="lab-edges">
+                <line x1="110" y1="22" x2="40" y2="58"/><line data-node="r-b1" x1="110" y1="22" x2="110" y2="58"/><line x1="110" y1="22" x2="180" y2="58"/>
+                <line x1="40" y1="66" x2="17" y2="102"/><line x1="40" y1="66" x2="63" y2="102"/>
+                <line x1="110" y1="66" x2="87" y2="102"/><line data-node="b1-l3" x1="110" y1="66" x2="133" y2="102"/>
+                <line x1="180" y1="66" x2="157" y2="102"/><line x1="180" y1="66" x2="203" y2="102"/>
+              </g>
+              <g class="lab-nodes">
+                <rect data-node="r" x="93" y="6" width="34" height="16" rx="4"/>
+                <rect x="23" y="50" width="34" height="16" rx="4"/><rect data-node="b1" x="93" y="50" width="34" height="16" rx="4"/><rect x="163" y="50" width="34" height="16" rx="4"/>
+                <rect x="6" y="102" width="22" height="16" rx="4"/><rect x="52" y="102" width="22" height="16" rx="4"/>
+                <rect x="76" y="102" width="22" height="16" rx="4"/><rect data-node="l3" x="122" y="102" width="22" height="16" rx="4"/>
+                <rect x="146" y="102" width="22" height="16" rx="4"/><rect x="192" y="102" width="22" height="16" rx="4"/>
+              </g>
+            </svg>
+            <p class="lab-tree-cap mono">árvore B do índice</p>
+          </div>
+
+          <div class="lab-table">
+            <p class="lab-cap mono">dbo.NotaFiscalSaida · 192 linhas</p>
+            <div class="lab-grid" aria-hidden="true"></div>
+          </div>
+
+          <div class="lab-meters">
+            <div class="meter" data-meter="time">
+              <p>Tempo</p>
+              <div class="m-row"><span>sem índice</span><span class="m-bar" data-plan="scan"><i></i></span><b class="m-val" data-plan="scan">–</b></div>
+              <div class="m-row"><span>com índice</span><span class="m-bar" data-plan="seek"><i></i></span><b class="m-val" data-plan="seek">–</b></div>
+            </div>
+            <div class="meter" data-meter="cpu">
+              <p>CPU</p>
+              <div class="m-row"><span>sem índice</span><span class="m-bar" data-plan="scan"><i></i></span><b class="m-val" data-plan="scan">–</b></div>
+              <div class="m-row"><span>com índice</span><span class="m-bar" data-plan="seek"><i></i></span><b class="m-val" data-plan="seek">–</b></div>
+            </div>
+            <div class="meter" data-meter="rows">
+              <p>Linhas lidas</p>
+              <div class="m-row"><span>sem índice</span><span class="m-bar" data-plan="scan"><i></i></span><b class="m-val" data-plan="scan">–</b></div>
+              <div class="m-row"><span>com índice</span><span class="m-bar" data-plan="seek"><i></i></span><b class="m-val" data-plan="seek">–</b></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="lab-result mono" id="lab-result" aria-live="polite"></p>
+        <p class="lab-note">
+          Simulação ilustrativa de como um índice muda o plano de execução. Os percentuais de tempo e CPU são os da
+          otimização real da impressão de NF de saída.
+        </p>
+      </div>
+
+      <div class="works">
+        <article class="work work-main">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-db"/></svg></span>
+            <div><h3>Desempenho do banco de dados</h3><p class="work-count mono">~115 PBIs e bugs</p></div>
+          </header>
+          <p class="work-lead">
+            Minha marca registrada: revisão contínua de telas, procedures, jobs e sincronizações em todos os sistemas,
+            eliminando deadlocks e gargalos de produção.
+          </p>
+          <div class="work-highlight">
+            <div><strong>−95%</strong><span>de tempo</span></div>
+            <div><strong>−99%</strong><span>de CPU</span></div>
+            <p>Impressão de NF de saída sem o deadlock que travava a operação noturna.</p>
+          </div>
+          <ul class="work-list">
+            <li>Índices que acabaram com o deadlock entre o Distribuidor Regional e a sincronização ERP/WMS.</li>
+            <li>Pesquisa de produtos do E-Commerce passou a gravar só os itens alterados, sem reindexar tudo.</li>
+            <li>Cache e nova arquitetura da vitrine do portal de E-Commerce.</li>
+            <li>Nova arquitetura do cálculo de totais do pedido de venda e da restrição de venda.</li>
+            <li>Sincronização de endereços, rotas e roteiros entre ERP e WMS.</li>
+            <li>Controle de transação e desempenho na importação do movimento fiscal.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-globe"/></svg></span>
+            <div><h3>Integrações</h3><p class="work-count mono">~100 itens</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Homologação de operador logístico com grandes indústrias farmacêuticas e de cosméticos, PBM e empresas de dados de mercado.</li>
+            <li>Nova arquitetura de sincronização com marketplace B2B, processando pré-pedidos com mais de 500 itens.</li>
+            <li>Arquivo de pedido integrado com controle de transação por item em cerca de 10 layouts de redes e sistemas de farmácia.</li>
+            <li>Integração com marketplaces e plataformas de e-commerce.</li>
+            <li>Boletos híbridos com Pix e gestão de títulos e cessões para FIDC.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-bolt"/></svg></span>
+            <div><h3>Inovação e infraestrutura</h3><p class="work-count mono">iniciativas próprias</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Publicação de sistemas: ambientes de BD, IIS, ClickOnce e Wiki, cadastros de formulário e menu e tela de comparação de dados.</li>
+            <li>Integração com o sistema de controle de acesso e ponto, com base própria e sincronização de funcionários e estrutura organizacional.</li>
+            <li>Migração do TFS para o Azure DevOps e migração do coletor de check-out.</li>
+            <li>Scripts de endereços de linha e pulmão na migração de centro de distribuição.</li>
+            <li>WMS em x86/x64 e equalização das instâncias de banco.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-code"/></svg></span>
+            <div><h3>Modernização da arquitetura</h3><p class="work-count mono">~50 itens</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Cerca de 28 itens migrando parâmetros antigos para uma tela de parâmetros dinâmica.</li>
+            <li>Remoção de legado: funções CLR, MongoDB do app móvel, pedido via tablet, frete antigo e 110 procedures sem uso.</li>
+            <li>Substituição de <code>ON DELETE CASCADE</code> e do tratamento de erro antigo.</li>
+            <li>Preparação do banco para o CNPJ alfanumérico.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-award"/></svg></span>
+            <div><h3>Projetos de negócio</h3><p class="work-count mono">2025 — 2026</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Produtos de validade curta: tipo de estoque no processamento de pedidos, devoluções, relatórios e simulador.</li>
+            <li>Portal do Cliente: API de carrinho, finalização e forma de pagamento.</li>
+            <li>Venda de caixa fechada com tipo de origem no melhor desconto do ERP e do app móvel.</li>
+            <li>Reforma tributária, com o cálculo de ST.</li>
+          </ul>
+        </article>
+      </div>
+
+      <p class="footnote">
+        Números do backlog no Azure DevOps. Área e classificação consideram só PBIs e bugs, e as quantidades por tema
+        são aproximadas.
+      </p>
+    </section>
+
+    <!-- ============ PROJETOS ============ -->
+    <section class="section wrap reveal" id="projetos" data-scene="network" data-label="projetos">
+      <div class="section-head">
+        <p class="kicker mono">04 · projetos</p>
         <h2>Coisas que construí</h2>
       </div>
 
@@ -316,31 +525,38 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
     </section>
 
     <!-- ============ STACK ============ -->
-    <section class="section wrap reveal" id="stack">
+    <section class="section wrap reveal" id="stack" data-scene="globe" data-label="tecnologias">
       <div class="section-head">
-        <p class="kicker mono">04 · tecnologias</p>
+        <p class="kicker mono">05 · tecnologias</p>
         <h2>Com o que eu trabalho</h2>
       </div>
-      <div class="stack">
-        <div class="stack-group">
-          <h3><svg class="ic"><use href="#i-db"/></svg>Banco de dados</h3>
-          <ul class="chips"><li>SQL Server</li><li>T-SQL</li><li>Tuning de consultas</li><li>Análise de falhas</li><li>Automação de rotinas</li><li>Modelagem relacional</li></ul>
+      <div class="stack-layout">
+        <div class="constellation">
+          <canvas id="skills-canvas" role="img" aria-label="Constelação 3D das tecnologias que uso, agrupadas em banco de dados, desenvolvimento e ferramentas"></canvas>
+          <p class="const-hint mono">arraste para girar · toque em um ponto</p>
+          <div class="const-info" id="skill-info" aria-live="polite"><b></b><span></span></div>
         </div>
-        <div class="stack-group">
-          <h3><svg class="ic"><use href="#i-code"/></svg>Desenvolvimento</h3>
-          <ul class="chips"><li>C#</li><li>.NET</li><li>Entity Framework</li><li>Java (Android)</li><li>Angular</li><li>JavaScript</li><li>HTML &amp; CSS</li></ul>
-        </div>
-        <div class="stack-group">
-          <h3><svg class="ic"><use href="#i-bolt"/></svg>3D &amp; ferramentas</h3>
-          <ul class="chips"><li>Unity 3D</li><li>Blender 3D</li><li>Vuforia</li><li>Visual Studio</li><li>Git &amp; GitHub</li><li>Adobe XD</li></ul>
+        <div class="stack">
+          <div class="stack-group" data-group="db">
+            <h3><svg class="ic"><use href="#i-db"/></svg>Banco de dados</h3>
+            <ul class="chips"><li data-skill="SQL Server">SQL Server</li><li data-skill="T-SQL">T-SQL</li><li data-skill="Tuning de consultas">Tuning de consultas</li><li data-skill="Análise de falhas">Análise de falhas</li><li data-skill="Automação de rotinas">Automação de rotinas</li><li data-skill="Modelagem relacional">Modelagem relacional</li></ul>
+          </div>
+          <div class="stack-group" data-group="dev">
+            <h3><svg class="ic"><use href="#i-code"/></svg>Desenvolvimento</h3>
+            <ul class="chips"><li data-skill="C#">C#</li><li data-skill=".NET">.NET</li><li data-skill="Entity Framework">Entity Framework</li><li data-skill="Java (Android)">Java (Android)</li><li data-skill="Angular">Angular</li><li data-skill="JavaScript">JavaScript</li><li data-skill="Three.js">Three.js</li><li data-skill="HTML &amp; CSS">HTML &amp; CSS</li></ul>
+          </div>
+          <div class="stack-group" data-group="tools">
+            <h3><svg class="ic"><use href="#i-bolt"/></svg>3D &amp; ferramentas</h3>
+            <ul class="chips"><li data-skill="Azure DevOps">Azure DevOps</li><li data-skill="Git &amp; GitHub">Git &amp; GitHub</li><li data-skill="Visual Studio">Visual Studio</li><li data-skill="Unity 3D">Unity 3D</li><li data-skill="Blender 3D">Blender 3D</li><li data-skill="Vuforia">Vuforia</li><li data-skill="Adobe XD">Adobe XD</li></ul>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ============ FORMAÇÃO ============ -->
-    <section class="section wrap reveal" id="formacao">
+    <section class="section wrap reveal" id="formacao" data-scene="wave" data-label="formação">
       <div class="section-head">
-        <p class="kicker mono">05 · formação</p>
+        <p class="kicker mono">06 · formação</p>
         <h2>Formação e certificações</h2>
       </div>
       <div class="edu">
@@ -389,9 +605,9 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
     </section>
 
     <!-- ============ CONTATO ============ -->
-    <section class="section wrap reveal" id="contato">
+    <section class="section wrap reveal" id="contato" data-scene="core" data-label="contato">
       <div class="contact">
-        <p class="kicker mono">06 · contato</p>
+        <p class="kicker mono">07 · contato</p>
         <h2>Tem um projeto ou uma ideia?</h2>
         <p class="contact-lead">Estou aberto a conversas sobre banco de dados, automação, projetos e oportunidades. Respondo por e-mail ou LinkedIn.</p>
         <div class="contact-mail">
@@ -412,10 +628,33 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
   <footer class="footer">
     <div class="wrap footer-inner">
       <span>© <span id="year">2026</span> Daniel Soares Bailão</span>
-      <span class="mono">feito à mão · hospedado no GitHub Pages</span>
+      <span class="mono">feito à mão · hospedado no GitHub Pages · <span class="hint" title="Konami code">↑↑↓↓←→←→BA</span></span>
     </div>
   </footer>
 
-  <script src="js/site.js"></script>
+  <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+  <div class="hud mono" aria-hidden="true">
+    <span class="hud-dot"></span>EXEC <b id="hud-step">01/08</b> · <span id="hud-name">início</span> · <span id="hud-pct">0%</span>
+  </div>
+
+  <dialog class="egg" id="egg" aria-labelledby="egg-title">
+    <div class="term-bar"><i></i><i></i><i></i><span id="egg-title">SQLQuery1.sql · PRODUÇÃO</span></div>
+    <pre class="egg-body mono"><span class="c-key">DROP TABLE</span> dbo.Portfolio;
+
+<span class="c-err">Msg 3701, Level 11, State 5, Line 1</span>
+<span class="c-err">Cannot drop the table 'dbo.Portfolio', because it does
+not exist or you do not have permission.</span>
+
+<span class="c-com">-- Ufa. Mas quem chegou até aqui merece um certificado.</span></pre>
+    <form method="dialog" class="egg-actions">
+      <a class="btn btn-primary btn-sm" href="certificado.html">Emitir meu certificado</a>
+      <button class="btn btn-ghost btn-sm" value="rollback">ROLLBACK;</button>
+    </form>
+  </dialog>
+
+  <script src="js/site.js?v=7"></script>
+  <script src="js/lab.js?v=7"></script>
+  <script src="js/skills.js?v=7"></script>
+  <script type="module" src="js/scene.js?v=7"></script>
 </body>
 </html>

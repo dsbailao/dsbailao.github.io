@@ -344,7 +344,31 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .bars { display: grid; gap: 0.85rem; }
 .bars li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.8rem; }
 .bars span { color: var(--text-2); font-size: 0.9rem; }
-.bars i { height: 0.9rem; width: calc(var(--v) / 292 * 100%); border-radius: 2px 6px 6px 2px; background: var(--accent-2); }
+.bars i { height: 0.9rem; width: calc(var(--v) / var(--max, 292) * 100%); border-radius: 2px 6px 6px 2px; background: var(--accent); }
+.bars-tfs i { background: var(--accent-2); }
+.chart-wide { grid-column: 1 / -1; }
+.chart figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; }
+.legend { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-3); font-size: 0.8rem; font-weight: 500; }
+.legend i { width: 0.7rem; height: 0.7rem; border-radius: 3px; background: var(--accent); }
+.legend .lg-tfs { background: var(--accent-2); }
+.legend .lg-ado { margin-left: 0.6rem; }
+.cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0.6rem; }
+.cols-12 i { height: calc(var(--v) / 467 * 78%); }
+.cols-12 .tfs i { background: var(--accent-2); }
+.cols-12 li:nth-child(n + 6) i { transition-delay: 0.4s; }
+.cols-12 li:nth-child(n + 9) i { transition-delay: 0.5s; }
+
+/* eras do backlog */
+.era { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 1rem; margin: 2.6rem 0 1.2rem; padding-top: 1.2rem; border-top: 1px dashed var(--line); }
+.era-when { color: var(--accent); font-size: 0.82rem; }
+.era h3 { font-size: 1.25rem; }
+
+/* papel em paralelo (Scrum Master) e metas das sprints */
+.role-parallel::before { border-style: dashed; border-color: var(--accent-2); }
+.role-tag { margin-left: 0.4rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent-2) 14%, transparent); color: var(--accent-2); font-size: 0.7rem; font-weight: 500; vertical-align: 0.15em; }
+.sprints { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem; margin-top: 0.8rem; }
+.sprints li { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.45rem 0.7rem; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); font-size: 0.86rem; color: var(--text-2); }
+.sprints .mono { flex: none; color: var(--accent-2); font-size: 0.74rem; }
 .bars b { text-align: right; }
 
 .works { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
@@ -679,7 +703,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .stat strong { font-size: 1.35rem; }
   .kpi { padding: 1rem; }
   .kpi strong { font-size: 1.6rem; }
-  .bars li { grid-template-columns: 5.5rem minmax(0, 1fr) 2.2rem; gap: 0.6rem; }
+  .bars li { grid-template-columns: 6.4rem minmax(0, 1fr) 2.2rem; gap: 0.6rem; }
+  .bars span { white-space: nowrap; font-size: 0.85rem; }
+  .cols-12 { gap: 0.25rem; }
+  .cols-12 span { font-size: 0.56rem; }
+  .cols-12 b { font-size: 0.6rem; }
+  .sprints { grid-template-columns: minmax(0, 1fr); }
   .work { padding: 1.3rem; }
   .lab { padding: 1.2rem; }
   .lab-body, .lab-meters { grid-template-columns: minmax(0, 1fr); }

@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site.css?v=7">
+  <link rel="stylesheet" href="css/site.css?v=10">
   <script>
     // Aplica o tema salvo antes de pintar a página (evita piscar).
     document.documentElement.classList.add('js');
@@ -117,15 +117,19 @@
         <div class="terminal mono">
           <div class="term-bar"><i></i><i></i><i></i><span>carreira.sql</span></div>
           <pre class="term-body"><span class="c-com">-- quem sou eu, em T-SQL</span>
-<span class="c-key">SELECT</span> cargo, empresa, desde
+<span class="c-key">SELECT</span> cargo, desde, itens
   <span class="c-key">FROM</span> dbo.Carreira <span class="c-key">WITH</span>(<span class="c-key">NOLOCK</span>)
- <span class="c-key">WHERE</span> atual = <span class="c-num">1</span>;
+ <span class="c-key">ORDER BY</span> desde;
 
-<span class="c-dim">cargo           empresa   desde</span>
-<span class="c-dim">--------------- --------- -----</span>
-DBA SQL Server  Solfarma  <span class="c-num">2021</span>
+<span class="c-dim">cargo              desde itens</span>
+<span class="c-dim">------------------ ----- -----</span>
+Programador Júnior <span class="c-num">2015</span>  <span class="c-num">874</span>
+Programador Pleno  <span class="c-num">2017</span>  <span class="c-num">485</span>
+Scrum Master       <span class="c-num">2018</span>  <span class="c-ok">12 sprints</span>
+Analista Sênior    <span class="c-num">2020</span>  <span class="c-num">411</span>
+DBA SQL Server     <span class="c-num">2021</span>  <span class="c-num">1316</span>
 
-<span class="c-dim">(1 linha afetada)</span><span class="cursor"></span></pre>
+<span class="c-dim">(5 linhas afetadas)</span><span class="cursor"></span></pre>
         </div>
       </div>
     </section>
@@ -133,8 +137,8 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
     <div class="wrap stats reveal">
       <div class="stat"><strong><span data-years-since="2015-08">11</span>+ anos</strong><span>de carreira em TI</span></div>
       <div class="stat"><strong><span data-years-since="2021-06">5</span>+ anos</strong><span>como DBA SQL Server</span></div>
-      <div class="stat"><strong>4 cargos</strong><span>de júnior a DBA na mesma empresa</span></div>
-      <div class="stat"><strong>Pós</strong><span>em Engenharia de Software</span></div>
+      <div class="stat"><strong data-count="3098">3.098</strong><span>itens de backlog de 2015 a 2026</span></div>
+      <div class="stat"><strong data-count="12">12</strong><span>sprints conduzidas como Scrum Master</span></div>
     </div>
 
     <!-- ============ SOBRE ============ -->
@@ -147,7 +151,8 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
         <div class="about-text">
           <p>
             Sou <strong>Administrador de Banco de Dados SQL Server</strong> na Solfarma, onde entrei em 2015 como
-            programador júnior e cresci até analista sênior antes de assumir a área de dados.
+            programador júnior e cresci até analista sênior, conduzindo as sprints do time como Scrum Master,
+            antes de assumir a área de dados.
           </p>
           <p>
             No dia a dia analiso e otimizo consultas T-SQL, investigo falhas de sistema e automatizo rotinas.
@@ -199,13 +204,33 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
             </li>
             <li class="role">
               <div class="role-top"><h4>Programador / Analista Sênior</h4><span class="when mono">jan 2020 — jun 2021</span></div>
-              <p>Desenvolvimento de software em C# e SQL Server. Manutenção do app Android nativo (Java) e do portal web (Angular).</p>
+              <p>Desenvolvimento de software em C# e SQL Server. Manutenção do app Android nativo (Java) e do portal web (Angular). Em 2021, criou a base GSTI, o GS300TI, o módulo de backup e o Schema Compare, dando início à linha de ferramentas internas e desempenho.</p>
+            </li>
+            <li class="role role-parallel">
+              <div class="role-top"><h4>Scrum Master <span class="role-tag mono">em paralelo</span></h4><span class="when mono">set 2018 — mar 2021</span></div>
+              <p>Conduziu 12 sprints do time de desenvolvimento do ERP, cada uma com meta própria, em ciclos mensais de release. Registrou e acompanhou os impedimentos do time, como validações da contabilidade, retorno de parceiros e indisponibilidade de serviços externos, até a remoção.</p>
+              <ul class="sprints" aria-label="Metas das sprints">
+                <li><span class="mono">set/18</span>Operação logística via API</li>
+                <li><span class="mono">set/18</span>Distribuidor regional via API</li>
+                <li><span class="mono">out/18</span>Geolocalização e sinistro</li>
+                <li><span class="mono">nov/18</span>Reativação do agrupamento de notas</li>
+                <li><span class="mono">dez/18</span>Transferência de saída e canal de venda</li>
+                <li><span class="mono">jan/19</span>Custo interestadual na transferência</li>
+                <li><span class="mono">jan/19</span>Melhorias no processo de transferência</li>
+                <li><span class="mono">jan/19</span>Canal de venda · parte 1</li>
+                <li><span class="mono">mar/19</span>Canal de venda · parte 2 e lote de conferência</li>
+                <li><span class="mono">mar/19</span>E-commerce de indústria parceira</li>
+                <li><span class="mono">abr/19</span>Nova versão da NF-e e integração via API</li>
+                <li><span class="mono">mar/21</span>Cashback</li>
+              </ul>
             </li>
             <li class="role">
               <div class="role-top"><h4>Programador / Analista Pleno</h4><span class="when mono">nov 2017 — jan 2020</span></div>
+              <p>Liderou projetos de negócio grandes, como Canal de Venda, Geolocalização na venda, Portal E-Commerce e integrações com plataformas de e-commerce e com a indústria farmacêutica.</p>
             </li>
             <li class="role">
               <div class="role-top"><h4>Programador / Analista Júnior</h4><span class="when mono">ago 2015 — out 2017</span></div>
+              <p>Telas e regras de negócio do ERP, com foco no módulo Financeiro, que se tornou a base do sistema atual.</p>
             </li>
           </ol>
         </article>
@@ -231,22 +256,29 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
         <p class="kicker mono">03 · entregas</p>
         <h2>O trabalho em números</h2>
         <p class="section-lead">
-          De 2022 a 2026, meu backlog no Azure DevOps da Solfarma reúne mais de mil entregas em todos os sistemas
-          do GS300: ERP, WMS, MOB, GFC, E-Commerce e Coletor.
+          Em 11 anos, meu backlog na Solfarma reúne mais de 3 mil itens: de 2015 a 2021 no TFS e, desde 2022, no
+          Azure DevOps, em todos os sistemas do GS300 (ERP, WMS, MOB, GFC, E-Commerce e Coletor).
         </p>
       </div>
 
       <div class="kpis">
-        <div class="kpi"><strong data-count="1224">1.224</strong><span>itens de trabalho</span><small>590 tarefas · 402 PBIs · 224 bugs</small></div>
-        <div class="kpi"><strong data-count="1156">1.156</strong><span>itens concluídos</span><small>94% do total</small></div>
-        <div class="kpi"><strong data-count="361">361</strong><span>melhorias</span><small>além de 225 correções</small></div>
-        <div class="kpi"><strong data-count="38">38</strong><span>inovações</span><small>iniciativas novas no sistema</small></div>
+        <div class="kpi"><strong data-count="3098">3.098</strong><span>itens de trabalho</span><small>1.896 tarefas · 868 PBIs · 306 bugs</small></div>
+        <div class="kpi"><strong data-count="2979">2.979</strong><span>itens concluídos</span><small>96% do total</small></div>
+        <div class="kpi"><strong data-count="1774">1.774</strong><span>pontos de esforço</span><small>em PBIs e bugs de 2015 a 2021</small></div>
+        <div class="kpi"><strong data-count="12">12</strong><span>sprints como Scrum Master</span><small>de 2018 a 2021</small></div>
       </div>
 
       <div class="charts">
-        <figure class="chart">
-          <figcaption>Itens criados por ano</figcaption>
-          <ul class="cols">
+        <figure class="chart chart-wide">
+          <figcaption>Itens criados por ano <span class="legend"><i class="lg-tfs"></i>TFS <i class="lg-ado"></i>Azure DevOps</span></figcaption>
+          <ul class="cols cols-12">
+            <li style="--v:225" class="tfs"><b>225</b><i></i><span>2015</span></li>
+            <li style="--v:467" class="tfs"><b>467</b><i></i><span>2016</span></li>
+            <li style="--v:233" class="tfs"><b>233</b><i></i><span>2017</span></li>
+            <li style="--v:282" class="tfs"><b>282</b><i></i><span>2018</span></li>
+            <li style="--v:163" class="tfs"><b>163</b><i></i><span>2019</span></li>
+            <li style="--v:268" class="tfs"><b>268</b><i></i><span>2020</span></li>
+            <li style="--v:236" class="tfs"><b>236</b><i></i><span>2021</span></li>
             <li style="--v:271"><b>271</b><i></i><span>2022</span></li>
             <li style="--v:259"><b>259</b><i></i><span>2023</span></li>
             <li style="--v:294"><b>294</b><i></i><span>2024</span></li>
@@ -256,7 +288,19 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
           <p class="chart-note">* até outubro de 2026</p>
         </figure>
         <figure class="chart">
-          <figcaption>PBIs e bugs por área de negócio</figcaption>
+          <figcaption>Módulos mais trabalhados · 2015–2021</figcaption>
+          <ul class="bars bars-tfs" style="--max:456">
+            <li style="--v:456"><span>Financeiro</span><i></i><b>456</b></li>
+            <li style="--v:381"><span>Venda</span><i></i><b>381</b></li>
+            <li style="--v:121"><span>Op. Logística</span><i></i><b>121</b></li>
+            <li style="--v:114"><span>Compras</span><i></i><b>114</b></li>
+            <li style="--v:112"><span>Cadastro</span><i></i><b>112</b></li>
+            <li style="--v:102"><span>Interfaces</span><i></i><b>102</b></li>
+            <li style="--v:65"><span>E-Commerce</span><i></i><b>65</b></li>
+          </ul>
+        </figure>
+        <figure class="chart">
+          <figcaption>PBIs e bugs por área de negócio · 2022–2026</figcaption>
           <ul class="bars">
             <li style="--v:292"><span>Comercial</span><i></i><b>292</b></li>
             <li style="--v:125"><span>Operacional</span><i></i><b>125</b></li>
@@ -347,6 +391,10 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
         </p>
       </div>
 
+      <div class="era">
+        <p class="era-when mono">2022 — 2026 · Azure DevOps</p>
+        <h3>Banco de dados, desempenho e integrações</h3>
+      </div>
       <div class="works">
         <article class="work work-main">
           <header class="work-head">
@@ -427,9 +475,94 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
         </article>
       </div>
 
+      <div class="era">
+        <p class="era-when mono">2015 — 2021 · TFS</p>
+        <h3>A construção do ERP, dos canais de venda e das integrações</h3>
+      </div>
+      <div class="works">
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-db"/></svg></span>
+            <div><h3>Financeiro, a base do ERP atual</h3><p class="work-count mono">456 itens · 2016 — 2018</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Conta financeira em contas a pagar e a receber, transferências, frete e conciliação.</li>
+            <li>Bloqueio de cliente por saldo e saldo de conta corrente da pessoa, incluindo verbas.</li>
+            <li>Remessa de pagamentos a fornecedores (PAGFOR).</li>
+            <li>Negociação e confissão de dívida, com a situação jurídica.</li>
+            <li>Carteiras de cobrança de seis bancos e trava de fechamento contábil.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-globe"/></svg></span>
+            <div><h3>Canais de venda e e-commerce</h3><p class="work-count mono">E-Commerce · Venda</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Criação do projeto do Portal E-Commerce, com carrinho, recálculo de grupos e reestruturação da busca.</li>
+            <li>Loja virtual com pagamento antecipado e cartão de crédito.</li>
+            <li>Integração com a plataforma de e-commerce de uma grande indústria de bens de consumo: pedidos, clientes, limite e cupom.</li>
+            <li>Venda financiada, com a baixa integrada a plataformas de trade.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-code"/></svg></span>
+            <div><h3>Integrações com a indústria</h3><p class="work-count mono">O.L. e APIs</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Migração das integrações de operador logístico de seis indústrias para a nova versão da plataforma.</li>
+            <li>Novo layout de programa de fidelidade via API.</li>
+            <li>APIs com o distribuidor regional, indústrias farmacêuticas e empresas de dados de mercado.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-award"/></svg></span>
+            <div><h3>Projetos estruturais de vendas</h3><p class="work-count mono">2017 — 2021</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Canal de Venda: revisão geral da condição por canal, prazo e filial, em todas as captações.</li>
+            <li>Geolocalização na venda, com agendamento de visitas e check-in e check-out no app móvel.</li>
+            <li>Cashback: criação da estrutura e do fluxo, classificado como inovação.</li>
+            <li>Distribuição de medicamentos veterinários, com registro no Sipeagro e roteiro por canal.</li>
+            <li>Negociações comerciais no app móvel.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-cap"/></svg></span>
+            <div><h3>Fiscal e operação</h3><p class="work-count mono">Fiscal · WMS</p></div>
+          </header>
+          <ul class="work-list">
+            <li>NF-e 4.0 e Fundo de Combate à Pobreza.</li>
+            <li>Redução da base de ICMS-ST e ICMS substituto.</li>
+            <li>Operação de transferência com custo e ganho interestadual.</li>
+            <li>Incorporação de empresa, com a migração de produtos e de contas a pagar e a receber.</li>
+            <li>Separação de picking por origem e indicadores no WMS.</li>
+          </ul>
+        </article>
+
+        <article class="work">
+          <header class="work-head">
+            <span class="pillar-ic"><svg class="ic"><use href="#i-bolt"/></svg></span>
+            <div><h3>Começo da linha de infraestrutura</h3><p class="work-count mono">2021</p></div>
+          </header>
+          <ul class="work-list">
+            <li>Criação da base GSTI, do projeto GS300TI, do módulo de backup e do Schema Compare.</li>
+            <li>Otimização do agrupamento de notas.</li>
+            <li>Tratamento do uso de 100% de CPU do SQL Server.</li>
+          </ul>
+        </article>
+      </div>
+
       <p class="footnote">
-        Números do backlog no Azure DevOps. Área e classificação consideram só PBIs e bugs, e as quantidades por tema
-        são aproximadas.
+        Números do backlog no TFS (2015–2021) e no Azure DevOps (2022–2026). Área, classificação e esforço consideram
+        só PBIs e bugs, e as quantidades por tema são aproximadas.
       </p>
     </section>
 
@@ -546,8 +679,8 @@ DBA SQL Server  Solfarma  <span class="c-num">2021</span>
             <ul class="chips"><li data-skill="C#">C#</li><li data-skill=".NET">.NET</li><li data-skill="Entity Framework">Entity Framework</li><li data-skill="Java (Android)">Java (Android)</li><li data-skill="Angular">Angular</li><li data-skill="JavaScript">JavaScript</li><li data-skill="Three.js">Three.js</li><li data-skill="HTML &amp; CSS">HTML &amp; CSS</li></ul>
           </div>
           <div class="stack-group" data-group="tools">
-            <h3><svg class="ic"><use href="#i-bolt"/></svg>3D &amp; ferramentas</h3>
-            <ul class="chips"><li data-skill="Azure DevOps">Azure DevOps</li><li data-skill="Git &amp; GitHub">Git &amp; GitHub</li><li data-skill="Visual Studio">Visual Studio</li><li data-skill="Unity 3D">Unity 3D</li><li data-skill="Blender 3D">Blender 3D</li><li data-skill="Vuforia">Vuforia</li><li data-skill="Adobe XD">Adobe XD</li></ul>
+            <h3><svg class="ic"><use href="#i-bolt"/></svg>Métodos, 3D &amp; ferramentas</h3>
+            <ul class="chips"><li data-skill="Scrum">Scrum</li><li data-skill="TFS">TFS</li><li data-skill="Azure DevOps">Azure DevOps</li><li data-skill="Git &amp; GitHub">Git &amp; GitHub</li><li data-skill="Visual Studio">Visual Studio</li><li data-skill="Unity 3D">Unity 3D</li><li data-skill="Blender 3D">Blender 3D</li><li data-skill="Vuforia">Vuforia</li><li data-skill="Adobe XD">Adobe XD</li></ul>
           </div>
         </div>
       </div>
@@ -652,9 +785,9 @@ not exist or you do not have permission.</span>
     </form>
   </dialog>
 
-  <script src="js/site.js?v=7"></script>
-  <script src="js/lab.js?v=7"></script>
-  <script src="js/skills.js?v=7"></script>
-  <script type="module" src="js/scene.js?v=7"></script>
+  <script src="js/site.js?v=10"></script>
+  <script src="js/lab.js?v=10"></script>
+  <script src="js/skills.js?v=10"></script>
+  <script type="module" src="js/scene.js?v=10"></script>
 </body>
 </html>

@@ -85,7 +85,7 @@
         if (title) scramble(title);
         reveal.unobserve(en.target);
       });
-    }, { threshold: 0.12 });
+    }, { rootMargin: '0px 0px -12% 0px' }); // sem threshold: seções mais altas que a tela também aparecem
     document.querySelectorAll('.reveal').forEach((el) => reveal.observe(el));
 
     const spy = new IntersectionObserver((entries) => {

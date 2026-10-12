@@ -76,9 +76,10 @@ const shapes = {
     });
   },
 
-  // gráfico de barras 3D com os itens criados por ano
+  // gráfico de barras 3D com os itens criados por ano (2015 a 2026)
   bars() {
-    const vals = [271, 259, 294, 233, 167], w = 0.34, base = -1.7;
+    const vals = [225, 467, 233, 282, 163, 268, 236, 271, 259, 294, 233, 167], w = 0.17, base = -1.7;
+    const top = Math.max(...vals), step = 0.56;
     const total = vals.reduce((s, v) => s + v, 0);
     return build(() => {
       if (Math.random() < 0.14) {
@@ -87,7 +88,7 @@ const shapes = {
       }
       let r = Math.random() * total, k = 0;
       while (r > vals[k]) r -= vals[k++];
-      const cx = (k - 2) * 1.25, h = (vals[k] / 294) * 3.4;
+      const cx = (k - (vals.length - 1) / 2) * step, h = (vals[k] / top) * 3.6;
       const lo = [cx - w, base, -w], hi = [cx + w, base + h, w], p = [0, 0, 0];
       const axis = pick(3), edge = Math.random() < 0.6;
       for (let d = 0; d < 3; d++) {

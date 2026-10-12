@@ -21,7 +21,9 @@
     ['JavaScript', 'dev', 'DriveTunes e este site, sem framework.'],
     ['Three.js', 'dev', 'A cena 3D de partículas que acompanha esta página.'],
     ['HTML & CSS', 'dev', 'Este portfólio, feito à mão.'],
-    ['Azure DevOps', 'tools', 'Backlog, pull requests e a migração do TFS que conduzi.'],
+    ['Scrum', 'tools', 'Scrum Master de 12 sprints do time do ERP entre 2018 e 2021.'],
+    ['TFS', 'tools', 'Backlog de 2015 a 2021: 1.874 itens antes da migração para o Azure DevOps.'],
+    ['Azure DevOps', 'tools', 'Backlog desde 2022, pull requests e a migração do TFS que conduzi.'],
     ['Git & GitHub', 'tools', 'Versionamento de todos os projetos.'],
     ['Visual Studio', 'tools', 'A IDE do dia a dia há mais de 10 anos.'],
     ['Unity 3D', 'tools', 'App RA nas Escolas e curso de extensão na UNIFAFIBE.'],
@@ -31,7 +33,7 @@
   ];
   const LINKS = [
     ['SQL Server', 'C#'], ['T-SQL', 'Entity Framework'], ['C#', 'Unity 3D'], ['JavaScript', 'Three.js'],
-    ['Git & GitHub', 'Azure DevOps'], ['Automação de rotinas', 'Azure DevOps'], ['.NET', 'Visual Studio'],
+    ['Git & GitHub', 'Azure DevOps'], ['TFS', 'Azure DevOps'], ['Scrum', 'Azure DevOps'], ['Automação de rotinas', 'Azure DevOps'], ['.NET', 'Visual Studio'],
     ['Unity 3D', 'Blender 3D'], ['Unity 3D', 'Vuforia'], ['HTML & CSS', 'Adobe XD'], ['Angular', 'JavaScript'],
   ];
 

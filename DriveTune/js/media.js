@@ -4,6 +4,7 @@
 // O áudio do YouTube toca dentro de um iframe de outro domínio, então o navegador
 // não associa os comandos de mídia a esta página. Tocamos um áudio silencioso em loop
 // na própria página para que ela "possua" a sessão de mídia e receba os comandos.
+// No modo Navidrome o áudio já toca na página e o truque não é necessário.
 let silent = null;
 let wakeLock = null;
 let wantAwake = false;
@@ -22,9 +23,11 @@ function silentWavUrl(seconds = 10) {
   return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
 
-export function initMedia(handlers) {
-  silent = new Audio(silentWavUrl());
-  silent.loop = true;
+export function initMedia(handlers, { keepAlive = true } = {}) {
+  if (keepAlive) {
+    silent = new Audio(silentWavUrl());
+    silent.loop = true;
+  }
   if ('mediaSession' in navigator) {
     for (const [action, fn] of Object.entries(handlers)) {
       try { navigator.mediaSession.setActionHandler(action, fn); } catch { /* ação não suportada */ }
@@ -52,7 +55,7 @@ export function setMeta(track) {
     ? new MediaMetadata({
         title: track.title,
         artist: track.artist,
-        album: 'DriveTunes',
+        album: track.album || 'DriveTunes',
         artwork: [{ src: track.thumb, sizes: '480x360', type: 'image/jpeg' }],
       })
     : null;

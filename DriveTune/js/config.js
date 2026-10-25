@@ -9,4 +9,6 @@ const CLIENT_IDS = {
 export const CONFIG = {
   GOOGLE_CLIENT_ID: CLIENT_IDS[location.hostname] || '',
   SCOPE: 'https://www.googleapis.com/auth/youtube.readonly',
+  // Servidor sugerido na tela de login do Navidrome (pode ser trocado lá).
+  NAVIDROME_URL: 'https://musica.dsbailao.uk',
 };

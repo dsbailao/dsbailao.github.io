@@ -42,6 +42,8 @@
   <symbol id="i-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
   <symbol id="i-fill" viewBox="0 0 24 24"><path d="M5 15h2V8.41L18.59 20 20 18.59 8.41 7H15V5H5z"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><path d="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
   <symbol id="i-key" viewBox="0 0 24 24"><path d="M12.65 10A6 6 0 1 0 12.65 14H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></symbol>
   <symbol id="i-google" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></symbol>
 </svg>
@@ -63,6 +65,29 @@
       <input id="client-id" type="text" placeholder="000000000000-xxxx.apps.googleusercontent.com" autocomplete="off" spellcheck="false" required>
       <button class="btn btn-primary btn-lg" type="submit">Salvar</button>
     </form>
+    <button class="link" type="button" data-action="switch-source">Voltar para o Navidrome</button>
+  </div>
+</section>
+
+<!-- Login no Navidrome (modo padrão) -->
+<section id="screen-navidrome" class="screen" hidden>
+  <div class="screen-card">
+    <div class="brand big"><span class="brand-mark"><svg class="ic"><use href="#i-now"/></svg></span><span>DriveTunes</span></div>
+    <p class="lead">Sua música do Navidrome, feita para o carro.</p>
+    <form id="nd-form" class="nd-form">
+      <label class="field"><span>Servidor</span>
+        <input id="nd-url" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" required>
+      </label>
+      <label class="field"><span>Usuário</span>
+        <input id="nd-user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      </label>
+      <label class="field"><span>Senha</span>
+        <input id="nd-pass" type="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn btn-primary btn-xl" type="submit" id="nd-submit">Entrar</button>
+    </form>
+    <p class="fine">Use o mesmo usuário e senha do site do Navidrome. A senha não fica salva no aparelho, só um token de acesso.</p>
+    <button class="link" type="button" data-action="switch-source">Usar o YouTube</button>
   </div>
 </section>
 
@@ -76,6 +101,7 @@
     </button>
     <p class="fine">Acesso somente leitura: a conta é usada apenas para listar suas playlists e curtidas e para buscar músicas.</p>
     <button class="link" type="button" data-action="change-client">Alterar Client ID</button>
+    <button class="link" type="button" data-action="switch-source">Voltar para o Navidrome</button>
   </div>
 </section>
 
@@ -95,6 +121,9 @@
       <h1 class="topbar-title" id="view-title">Início</h1>
       <div class="topbar-right">
         <span class="clock" id="clock"></span>
+        <button class="source-btn" id="btn-source" data-action="switch-source">
+          <svg class="ic"><use href="#i-video"/></svg><span>YouTube</span>
+        </button>
         <button class="icon-btn" data-action="voice" aria-label="Buscar por voz"><svg class="ic"><use href="#i-mic"/></svg></button>
         <button class="icon-btn" data-action="fullscreen" aria-label="Tela cheia"><svg class="ic"><use href="#i-fullscreen"/></svg></button>
         <button class="avatar-btn" id="btn-avatar" data-action="menu" aria-label="Conta"><img id="avatar-img" alt="" hidden><span id="avatar-letter">?</span></button>
@@ -128,7 +157,7 @@
         <div class="mode-tabs" role="tablist" aria-label="Modo de exibição">
           <button class="mode-tab" role="tab" data-mode="cover"><svg class="ic"><use href="#i-album"/></svg><span>Player</span></button>
           <button class="mode-tab" role="tab" data-mode="lyrics"><svg class="ic"><use href="#i-lyrics"/></svg><span>Letra</span></button>
-          <button class="mode-tab" role="tab" data-mode="video"><svg class="ic"><use href="#i-video"/></svg><span>Vídeo</span></button>
+          <button class="mode-tab yt-only" role="tab" data-mode="video"><svg class="ic"><use href="#i-video"/></svg><span>Vídeo</span></button>
         </div>
 
         <div class="np-empty" id="np-empty">
@@ -145,7 +174,7 @@
                 <h2 class="np-title js-title"></h2>
                 <p class="np-artist js-artist"></p>
               </div>
-              <button class="btn art-toggle" id="btn-art-toggle" data-action="toggle-video" aria-pressed="false">
+              <button class="btn art-toggle yt-only" id="btn-art-toggle" data-action="toggle-video" aria-pressed="false">
                 <svg class="ic"><use href="#i-video"/></svg><span>Mostrar vídeo</span>
               </button>
               <p class="np-lyric-line" id="cover-lyric"></p>
@@ -209,17 +238,17 @@
 <div id="player-wrap"><div id="yt-player"></div></div>
 
 <div class="menu" id="menu" hidden>
-  <div class="menu-head"><strong id="menu-name">Minha conta</strong><span class="muted">YouTube</span></div>
+  <div class="menu-head"><strong id="menu-name">Minha conta</strong><span class="muted" id="menu-source">YouTube</span></div>
   <button class="menu-item accent" data-action="install" id="btn-install" hidden>
     <svg class="ic"><use href="#i-add"/></svg>
     <span class="menu-label">Instalar app<small>Cria o ícone do DriveTunes na tela inicial</small></span>
   </button>
-  <button class="menu-item" data-action="toggle-music" role="switch" aria-checked="true" id="music-only-toggle">
+  <button class="menu-item yt-only" data-action="toggle-music" role="switch" aria-checked="true" id="music-only-toggle">
     <svg class="ic"><use href="#i-now"/></svg>
     <span class="menu-label">Somente músicas<small>Esconde vídeos que não são música</small></span>
     <span class="switch" aria-hidden="true"></span>
   </button>
-  <button class="menu-item" data-action="change-client"><svg class="ic"><use href="#i-key"/></svg>Alterar Client ID</button>
+  <button class="menu-item yt-only" data-action="change-client"><svg class="ic"><use href="#i-key"/></svg>Alterar Client ID</button>
   <button class="menu-item danger" data-action="logout"><svg class="ic"><use href="#i-logout"/></svg>Sair da conta</button>
 </div>
 

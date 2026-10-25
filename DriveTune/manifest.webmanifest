@@ -2,7 +2,7 @@
   "id": "./",
   "name": "DriveTunes",
   "short_name": "DriveTunes",
-  "description": "Player do YouTube pensado para centrais multimídia de veículos.",
+  "description": "Player de música (Navidrome e YouTube) pensado para centrais multimídia de veículos.",
   "start_url": "./?source=app",
   "scope": "./",
   "display": "fullscreen",

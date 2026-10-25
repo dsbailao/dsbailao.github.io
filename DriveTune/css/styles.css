@@ -747,6 +747,45 @@ code {
 .mood-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; }
 .mood-head h2 { margin: 0; font-size: 2rem; font-weight: 850; letter-spacing: -0.02em; }
 
+/* ---------- fonte: Navidrome (padrão) ou YouTube ---------- */
+[data-source="navidrome"] .yt-only { display: none !important; }
+.source-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-right: 0.2rem;
+  transition: transform 0.1s;
+}
+.source-btn .ic { width: 1.4rem; height: 1.4rem; color: var(--accent); }
+.source-btn:active { transform: scale(0.95); }
+
+.nd-form { width: 100%; display: flex; flex-direction: column; gap: 0.9rem; text-align: left; }
+.field { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 650; color: var(--text-2); }
+.field input {
+  min-height: var(--tap);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--surface-3);
+  background: var(--surface);
+  padding: 0 1rem;
+  font-size: 1.1rem;
+  color: var(--text);
+  user-select: text;
+}
+.nd-form .btn { margin-top: 0.4rem; }
+.card-img.starred { background: linear-gradient(135deg, #f5b301, #c2410c); color: #fff; }
+
+/* No Navidrome as capas são de álbum (quadradas) e não há vídeo. */
+[data-source="navidrome"] .np-art .player-slot { width: min(100cqw, 100cqh); aspect-ratio: 1; }
+[data-source="navidrome"] .lyr-side .player-slot { width: min(100%, 10rem); aspect-ratio: 1; }
+[data-source="navidrome"] .slot-mini { width: 4.3rem; aspect-ratio: 1; }
+[data-source="navidrome"] .track-main img { width: 3.6rem; aspect-ratio: 1; }
+
 /* ---------- retrato / telas estreitas: navegação embaixo ---------- */
 @media (max-aspect-ratio: 1/1), (max-width: 700px) {
   :root { --tap: 3.3rem; }
@@ -776,6 +815,10 @@ code {
   .np-cover { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; }
   .np-art { height: auto; container-type: normal; }
   .np-art .player-slot { width: 100%; }
+  /* A capa quadrada ocupa o espaço que sobra acima dos controles. */
+  [data-source="navidrome"] .np-cover { grid-template-rows: minmax(0, 1fr) auto; }
+  [data-source="navidrome"] .np-art { height: 100%; container-type: size; }
+  [data-source="navidrome"] .np-art .player-slot { width: min(100cqw, 100cqh); }
   .np-side { text-align: center; }
   .art-toggle { align-self: center; }
 
@@ -783,6 +826,7 @@ code {
   .lyrics { grid-row: 1; }
   .lyr-side { grid-row: 2; display: grid; grid-template-columns: 8rem minmax(0, 1fr); align-items: center; column-gap: 0.9rem; }
   .lyr-side .player-slot { grid-row: 1; }
+  [data-source="navidrome"] .lyr-side .player-slot { width: 5rem; }
   .lyr-side .np-meta { grid-row: 1; }
   .lyr-side .progress-wrap, .lyr-side .ctrls, .lyr-side .sync-adjust { grid-column: 1 / -1; }
 
@@ -795,6 +839,7 @@ code {
   .lyr-side { gap: 0.4rem; }
   .lyr-side .np-title { -webkit-line-clamp: 1; font-size: 1.15rem; }
   .lyr-side .player-slot { width: min(100%, 13rem); }
+  [data-source="navidrome"] .lyr-side .player-slot { width: min(100%, 7rem); }
 }
 
 /* telas baixas (ex.: centrais 1024×600 / 800×480) */
@@ -805,6 +850,11 @@ code {
   .ctrl-main { width: 4.6rem; height: 4.6rem; }
   .mode-tab { min-height: 2.8rem; }
   .view-np { gap: 0.5rem; }
+}
+
+@media (max-width: 420px) {
+  .source-btn { padding: 0 0.8rem; }
+  .source-btn span { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

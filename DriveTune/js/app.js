@@ -1,8 +1,9 @@
 import { CONFIG } from './config.js';
-import { store } from './store.js';
+import { store, SOURCE } from './store.js';
 import { initAuth, isAuthReady, signIn, signOut, getToken, AuthError } from './auth.js';
 import * as YT from './youtube.js';
-import { initPlayer, Player, onPlayer } from './player.js';
+import * as ND from './navidrome.js';
+import { initPlayer, initAudioPlayer, Player, onPlayer } from './player.js';
 import { fetchLyrics } from './lyrics.js';
 import * as Media from './media.js';
 import { suggestQueries, recordPlay, mostPlayed, getRecommendations, cachedRecommendations } from './suggest.js';
@@ -29,6 +30,11 @@ function shuffleArr(a) {
 }
 
 /* ---------- estado ---------- */
+// O app roda em um modo por vez; trocar de modo recarrega a página (veja switchSource).
+const ND_MODE = SOURCE === 'navidrome';
+const SOURCE_NAMES = { navidrome: 'Navidrome', youtube: 'YouTube' };
+const ndHome = ND_MODE ? store.get('home') : null;
+
 const S = {
   queue: [], original: null, index: -1,
   shuffle: false, repeat: 'off',
@@ -42,6 +48,9 @@ const S = {
   showVideo: false, // vídeo no modo Player; sempre começa desligado
   seeking: false, seekP: 0, lastSave: 0, errors: 0, videoWarned: false,
   overlayTimer: null,
+  // Navidrome: início (cache para abrir rápido), biblioteca e álbuns achados na busca.
+  ndRecent: ndHome?.recent || null, ndStarred: ndHome?.starred || null, ndHomeAt: 0,
+  ndPlaylists: null, ndAlbums: null, ndLibLoading: false, ndFound: null, scrobbled: false,
 };
 const lists = {};
 const TITLES = { home: 'Início', search: 'Buscar', library: 'Biblioteca', playlist: 'Playlist', mood: 'Humor', queue: 'Fila', playing: 'Tocando agora' };
@@ -65,6 +74,7 @@ const current = () => S.queue[S.index] || null;
 
 /* ---------- inicialização ---------- */
 async function boot() {
+  document.documentElement.dataset.source = SOURCE;
   $('#origin-hint').textContent = location.origin;
   // Com Client ID fixo no código não faz sentido oferecer a troca.
   if (CONFIG.GOOGLE_CLIENT_ID) $$('[data-action="change-client"]').forEach((el) => { el.hidden = true; });
@@ -72,6 +82,13 @@ async function boot() {
   bindEvents();
   initPwa();
   initAutoFullscreen();
+  renderSourceButton();
+
+  if (ND_MODE) {
+    if (ND.isConnected()) enterApp();
+    else showNdLogin();
+    return;
+  }
 
   const clientId = CONFIG.GOOGLE_CLIENT_ID || store.get('clientId');
   if (!clientId) return showScreen('setup');
@@ -90,6 +107,7 @@ async function boot() {
 function showScreen(name) {
   $('#screen-setup').hidden = name !== 'setup';
   $('#screen-login').hidden = name !== 'login';
+  $('#screen-navidrome').hidden = name !== 'navidrome';
   $('#app').hidden = name !== 'app';
   placePlayer();
 }
@@ -100,7 +118,8 @@ function enterApp() {
   if (entered) return;
   entered = true;
 
-  initPlayer('yt-player').then(() => {
+  const ready = ND_MODE ? initAudioPlayer(ND.streamUrl) : initPlayer('yt-player');
+  ready.then(() => {
     const t = current();
     if (t) Player.cue(t.id, S.resumeAt);
   });
@@ -113,7 +132,7 @@ function enterApp() {
     seekto: (d) => Player.seek(d.seekTime),
     seekbackward: () => Player.seek(Player.time() - 10),
     seekforward: () => Player.seek(Player.time() + 10),
-  });
+  }, { keepAlive: !ND_MODE });
 
   restoreSession();
   navigate('home');
@@ -124,6 +143,7 @@ function enterApp() {
   startClock();
   setInterval(tick, 250);
 
+  if (ND_MODE) return; // o início do Navidrome busca os próprios dados
   if (getToken()) {
     loadProfile();
     loadPlaylists().then(() => loadRecommendations());
@@ -200,6 +220,29 @@ function bindEvents() {
       loadPlaylists().then(() => loadRecommendations());
     } catch (e) {
       toast(e.message);
+    }
+  });
+
+  $('#nd-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('#nd-submit');
+    btn.disabled = true;
+    btn.textContent = 'Conectando…';
+    try {
+      await ND.connect({ url: $('#nd-url').value, user: $('#nd-user').value, password: $('#nd-pass').value });
+      $('#nd-pass').value = '';
+      renderProfile();
+      if (!entered) { enterApp(); return; }
+      showScreen('app');
+      S.ndPlaylists = null;
+      S.ndAlbums = null;
+      loadNdHome();
+      if (S.view === 'library') renderLibrary();
+    } catch (err) {
+      toast(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
     }
   });
 
@@ -299,7 +342,28 @@ function onClick(e) {
     case 'suggest-fill': fillSuggestion(q); break;
     case 'artist-mix': playArtistMix(i); break;
     case 'recs-refresh': loadRecommendations({ force: true }); break;
+    case 'switch-source': switchSource(); break;
   }
+}
+
+/* ---------- troca de fonte (Navidrome ⇄ YouTube) ---------- */
+// Os dois modos não se misturam: cada um tem fila e histórico próprios,
+// então a troca guarda a posição atual e reabre o app no outro modo.
+function switchSource() {
+  const to = ND_MODE ? 'youtube' : 'navidrome';
+  if (S.playing && !confirm(`Mudar para o ${SOURCE_NAMES[to]}? A música atual vai parar.`)) return;
+  saveSession();
+  store.set('source', to);
+  location.reload();
+}
+
+function renderSourceButton() {
+  const to = ND_MODE ? 'youtube' : 'navidrome';
+  const btn = $('#btn-source');
+  btn.querySelector('use').setAttribute('href', ND_MODE ? '#i-video' : '#i-server');
+  btn.querySelector('span').textContent = SOURCE_NAMES[to];
+  btn.setAttribute('aria-label', `Mudar para o ${SOURCE_NAMES[to]}`);
+  $('#menu-source').textContent = SOURCE_NAMES[SOURCE];
 }
 
 /* ---------- navegação ---------- */
@@ -362,7 +426,7 @@ function placePlayer() {
   fitSlots();
   const wrap = $('#player-wrap');
   const hide = () => { wrap.style.cssText = 'left:-10000px;top:0;width:320px;height:180px'; };
-  if (!current() || $('#app').hidden || S.view !== 'playing') return hide();
+  if (ND_MODE || !current() || $('#app').hidden || S.view !== 'playing') return hide();
   const videoVisible = S.mode === 'video' || (S.mode === 'cover' && S.showVideo);
   if (!videoVisible) return hide();
   const slot = $(`#slot-${S.mode}`);
@@ -396,6 +460,7 @@ function playIndex(i) {
   S.lyricsFor = null;
   S.activeLine = -1;
   S.resumeAt = 0;
+  S.scrobbled = false;
   setOffset(0);
   Player.load(t.id);
   addRecent(t);
@@ -569,6 +634,12 @@ function tick() {
   $$('.js-dur').forEach((x) => { x.textContent = fmt(dur); });
   updateLyricHighlight(cur + S.offset);
 
+  // Conta como tocada no Navidrome depois de metade da música (ou 4 min), como os outros players.
+  if (ND_MODE && S.playing && !S.scrobbled && dur && cur >= Math.min(dur / 2, 240)) {
+    S.scrobbled = true;
+    ND.scrobble(t.id).catch(() => {});
+  }
+
   const now = Date.now();
   if (now - S.lastSave > 5000) {
     S.lastSave = now;
@@ -694,6 +765,7 @@ function sectionHead(title, { kicker = '', action = '' } = {}) {
 }
 
 function renderHome() {
+  if (ND_MODE) { renderNdHome(); return; }
   const el = $('#view-home');
   const hide = nonMusic();
   const recent = store.get('recent', []).filter((t) => !hide.has(t.id));
@@ -754,6 +826,7 @@ function likedCard() {
 }
 
 function renderLibrary() {
+  if (ND_MODE) { renderNdLibrary(); return; }
   const el = $('#view-library');
   const pls = musicPlaylists();
   const hidden = (S.playlists?.length || 0) - pls.length;
@@ -764,6 +837,82 @@ function renderLibrary() {
     html += `<p class="hint">${hidden} ${hidden === 1 ? 'playlist de vídeos oculta' : 'playlists de vídeos ocultas'} pelo filtro "Somente músicas".</p>`;
   }
   el.innerHTML = html;
+}
+
+/* ---------- Navidrome: início e biblioteca ---------- */
+function starredCard() {
+  return `<button class="card" data-action="open-playlist" data-id="starred">
+    <div class="card-img starred">${icon('star')}</div>
+    <span class="card-t">Favoritas</span><span class="card-s">Músicas com estrela</span>
+  </button>`;
+}
+
+function renderNdHome() {
+  const el = $('#view-home');
+  if (Date.now() - S.ndHomeAt > 120_000) loadNdHome(); // "Tocados recentemente" muda conforme você ouve
+
+  let html = sectionHead('Tocados recentemente', { kicker: ND.account()?.user || '' });
+  const recent = S.ndRecent;
+  if (recent?.length) html += `<div class="row-scroll">${recent.map(playlistCard).join('')}</div>`;
+  else html += recent ? emptyBlock('Os álbuns que você ouvir aparecem aqui.') : loadingBlock();
+
+  const starred = S.ndStarred;
+  lists.starred = starred || [];
+  html += sectionHead('Favoritas', {
+    action: starred?.length
+      ? `<div class="pl-actions">
+          <button class="btn btn-sm" data-action="shuffle-list" data-list="starred">${icon('shuffle')}Aleatório</button>
+          <button class="link" data-action="open-playlist" data-id="starred">Ver tudo</button>
+        </div>`
+      : '',
+  });
+  if (starred?.length) {
+    html += `<div class="row-scroll quick-grid">${starred.slice(0, 40).map((t, i) => quickRow(t, 'starred', i)).join('')}</div>`;
+  } else {
+    html += starred ? emptyBlock('Marque músicas com estrela ★ no Navidrome para vê-las aqui.') : loadingBlock();
+  }
+  el.innerHTML = html;
+}
+
+async function loadNdHome() {
+  S.ndHomeAt = Date.now();
+  const res = await guard(() => Promise.all([ND.getAlbums('recent', 20), ND.getStarred()]));
+  if (res) {
+    [S.ndRecent, S.ndStarred] = res;
+    S.playlistCache.set('starred', S.ndStarred);
+    store.set('home', { recent: S.ndRecent, starred: S.ndStarred.slice(0, 40) });
+  } else {
+    S.ndRecent ||= [];
+    S.ndStarred ||= [];
+  }
+  if (S.view === 'home') renderHome();
+}
+
+function renderNdLibrary() {
+  const el = $('#view-library');
+  let html = `<div class="grid">${starredCard()}${(S.ndPlaylists || []).map(playlistCard).join('')}</div>`;
+  if (!S.ndPlaylists) html += loadingBlock('Carregando playlists…');
+  html += sectionHead('Álbuns');
+  if (!S.ndAlbums) html += loadingBlock('Carregando álbuns…');
+  else html += S.ndAlbums.length ? `<div class="grid">${S.ndAlbums.map(playlistCard).join('')}</div>` : emptyBlock('Nenhum álbum na biblioteca.');
+  el.innerHTML = html;
+  if (!S.ndPlaylists) loadNdLibrary();
+}
+
+async function loadNdLibrary() {
+  if (S.ndLibLoading) return;
+  S.ndLibLoading = true;
+  const res = await guard(() => Promise.all([ND.getPlaylists(), ND.getAlbums('alphabeticalByName', 5000)]));
+  [S.ndPlaylists, S.ndAlbums] = res || [[], []];
+  S.ndLibLoading = false;
+  if (S.view === 'library') renderLibrary();
+}
+
+function showNdLogin() {
+  const acc = ND.account();
+  $('#nd-url').value = acc?.url || CONFIG.NAVIDROME_URL;
+  $('#nd-user').value = acc?.user || '';
+  showScreen('navidrome');
 }
 
 /* ---------- playlists de música x de vídeo ---------- */
@@ -846,18 +995,29 @@ async function playMood(i) {
   navigate('playing');
 }
 
+function findCollection(id) {
+  if (id === 'liked') return { title: 'Músicas curtidas', thumb: '' };
+  if (id === 'starred') return { title: 'Favoritas', thumb: '' };
+  return [
+    ...(S.playlists || []), ...(S.recs?.playlists || []), ...(S.moodPlaylists || []),
+    ...(S.ndRecent || []), ...(S.ndPlaylists || []), ...(S.ndAlbums || []), ...(S.ndFound || []),
+  ].find((p) => p.id === id) || { title: 'Playlist', thumb: '' };
+}
+
+function loadTracks(id) {
+  if (ND_MODE) return ND.getTracks(id);
+  return id === 'liked' ? YT.getLiked() : YT.getPlaylistTracks(id);
+}
+
 async function openPlaylist(id) {
-  const meta = id === 'liked'
-    ? { title: 'Músicas curtidas', thumb: '' }
-    : [...(S.playlists || []), ...(S.recs?.playlists || []), ...(S.moodPlaylists || [])].find((p) => p.id === id)
-      || { title: 'Playlist', thumb: '' };
+  const meta = findCollection(id);
   navigate('playlist', { title: meta.title });
   const el = $('#view-playlist');
   el.dataset.id = id;
   const key = `pl:${id}`;
 
   const head = (tracks) => `<div class="pl-head">
-    <div class="pl-cover">${meta.thumb ? `<img src="${esc(meta.thumb)}" alt="">` : icon(id === 'liked' ? 'heart' : 'queue')}</div>
+    <div class="pl-cover">${meta.thumb ? `<img src="${esc(meta.thumb)}" alt="">` : icon({ liked: 'heart', starred: 'star' }[id] || 'queue')}</div>
     <div class="pl-info">
       <h2>${esc(meta.title)}</h2>
       <p class="muted">${tracks ? `${tracks.length} músicas` : 'Carregando…'}</p>
@@ -871,7 +1031,7 @@ async function openPlaylist(id) {
   let tracks = S.playlistCache.get(id);
   if (!tracks) {
     el.innerHTML = head(null) + loadingBlock();
-    tracks = await guard(() => (id === 'liked' ? YT.getLiked() : YT.getPlaylistTracks(id)));
+    tracks = await guard(() => loadTracks(id));
     if (S.view !== 'playlist' || el.dataset.id !== id) return;
     if (!tracks) { el.innerHTML = head([]) + emptyBlock('Não foi possível carregar esta playlist.'); return; }
     S.playlistCache.set(id, tracks);
@@ -1021,7 +1181,7 @@ async function updateSuggest(q) {
   renderSuggest(q, history, []);
 
   let remote = [];
-  try { remote = await suggestQueries(q); } catch { /* sem sugestões online */ }
+  try { remote = await (ND_MODE ? ND.suggest(q) : suggestQueries(q)); } catch { /* sem sugestões online */ }
   if (seq !== suggestSeq || document.activeElement !== $('#search-input')) return;
   const known = new Set([lower, ...history.map((s) => s.toLowerCase())]);
   remote = remote.filter((s) => !known.has(s.toLowerCase())).slice(0, 8 - history.length);
@@ -1104,11 +1264,17 @@ async function doSearch(query, { autoplay = false } = {}) {
   store.set('searches', [q, ...store.get('searches', []).filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 10));
   const body = $('#search-body');
   body.innerHTML = loadingBlock('Buscando…');
-  const res = await guard(() => YT.search(q));
+  const res = await guard(() => (ND_MODE ? ND.search(q) : YT.search(q)));
   if (!res) { body.innerHTML = emptyBlock('Não foi possível buscar agora.'); return; }
-  body.innerHTML = res.length ? trackRows(res, 'search') : emptyBlock('Nenhum resultado.');
-  if (autoplay && res.length) {
-    playList(res, 0);
+  // No Navidrome a busca também traz álbuns, mostrados antes das músicas.
+  const tracks = ND_MODE ? res.songs : res;
+  const albums = ND_MODE ? res.albums : [];
+  if (ND_MODE) S.ndFound = albums;
+  let html = albums.length ? `${sectionHead('Álbuns')}<div class="row-scroll">${albums.map(playlistCard).join('')}</div>` : '';
+  if (tracks.length) html += (albums.length ? sectionHead('Músicas') : '') + trackRows(tracks, 'search');
+  body.innerHTML = html || emptyBlock('Nenhum resultado.');
+  if (autoplay && tracks.length) {
+    playList(tracks, 0);
     navigate('playing');
   }
 }
@@ -1266,6 +1432,10 @@ async function guard(fn) {
 }
 
 function authExpired() {
+  if (ND_MODE) {
+    toast('O Navidrome recusou o login. Entre novamente.', { label: 'Entrar', fn: showNdLogin, duration: 12000 });
+    return;
+  }
   toast('Sua sessão do Google expirou.', { label: 'Reconectar', fn: reconnect, duration: 12000 });
 }
 
@@ -1291,7 +1461,7 @@ async function loadProfile() {
 }
 
 function renderProfile() {
-  const p = S.profile;
+  const p = ND_MODE ? { name: ND.account()?.user } : S.profile;
   const img = $('#avatar-img');
   img.hidden = !p?.avatar;
   if (p?.avatar) img.src = p.avatar;
@@ -1314,6 +1484,13 @@ async function loadPlaylists() {
 }
 
 function logout() {
+  if (ND_MODE) {
+    if (!confirm('Sair do Navidrome neste aparelho?')) return;
+    ND.disconnect();
+    ['session', 'recent', 'searches', 'plays', 'home'].forEach((k) => store.remove(k));
+    location.reload();
+    return;
+  }
   if (!confirm('Sair da sua conta do YouTube neste aparelho?')) return;
   signOut();
   ['profile', 'playlists', 'session', 'recent', 'searches', 'plays', 'recs', 'musicChecked', 'plMusic', 'moods']
@@ -1397,8 +1574,9 @@ async function installApp() {
 
 /* ---------- compatibilidade com navegadores antigos (Chrome < 105) ---------- */
 // Sem "container queries", a área do vídeo/capa não consegue se ajustar sozinha
-// ao espaço disponível; calculamos o tamanho 16:9 aqui.
+// ao espaço disponível; calculamos o tamanho aqui (16:9, ou quadrado no Navidrome).
 const NO_CONTAINER_UNITS = !(window.CSS && CSS.supports('width', '1cqw'));
+const SLOT_RATIO = ND_MODE ? 1 : 16 / 9;
 const PORTRAIT = window.matchMedia('(max-aspect-ratio: 1/1), (max-width: 700px)');
 
 function fitSlots() {
@@ -1406,10 +1584,10 @@ function fitSlots() {
   for (const box of $$('.np-art, .video-stage')) {
     const slot = box.querySelector('.player-slot');
     if (!slot) continue;
-    // Em retrato a capa ocupa a largura toda (altura automática); o CSS já resolve.
-    if (PORTRAIT.matches && box.classList.contains('np-art')) { slot.style.width = ''; continue; }
+    // Em retrato a capa 16:9 ocupa a largura toda (altura automática); o CSS já resolve.
+    if (PORTRAIT.matches && box.classList.contains('np-art') && !ND_MODE) { slot.style.width = ''; continue; }
     if (!box.clientWidth || !box.clientHeight) continue;
-    const w = `${Math.floor(Math.min(box.clientWidth, (box.clientHeight * 16) / 9))}px`;
+    const w = `${Math.floor(Math.min(box.clientWidth, box.clientHeight * SLOT_RATIO))}px`;
     if (slot.style.width !== w) slot.style.width = w;
   }
 }

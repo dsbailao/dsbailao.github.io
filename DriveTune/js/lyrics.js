@@ -1,13 +1,17 @@
 // Letras via LRCLIB (https://lrclib.net) — API aberta, com letras sincronizadas.
+import { SOURCE } from './store.js';
+
 const API = 'https://lrclib.net/api/search';
 const cache = new Map();
 
 const NOISE = /(official|oficial|video|vídeo|clipe|clip|lyric|letra|legendad|tradu|audio|áudio|\bhd\b|\bhq\b|4k|visualizer|\bmv\b|remaster|ao vivo|\blive\b|dvd)/i;
 const FEAT = /\s*[([]?\s*\b(ft\.?|feat\.?|featuring|part\.|participação)\s.*$/i;
 
+const tidy = (s) => s.replace(FEAT, '').replace(/["“”]/g, '').replace(/\s+/g, ' ').trim();
+const dropNoise = (s) => s.replace(/[([【]([^)\]】]*)[)\]】]/g, (m, inner) => (NOISE.test(inner) ? ' ' : m));
+
 export function parseTitle(rawTitle = '', channel = '') {
-  let title = rawTitle
-    .replace(/[([【]([^)\]】]*)[)\]】]/g, (m, inner) => (NOISE.test(inner) ? ' ' : m))
+  let title = dropNoise(rawTitle)
     .replace(/\s*[|｜].*$/, '')
     .replace(/\b(official|oficial)\s+(music\s+)?(video|vídeo|audio|áudio|clipe)\b/gi, '');
 
@@ -23,8 +27,14 @@ export function parseTitle(rawTitle = '', channel = '') {
     track = m[2];
   }
 
-  const tidy = (s) => s.replace(FEAT, '').replace(/["“”]/g, '').replace(/\s+/g, ' ').trim();
   return { artist: tidy(artist), track: tidy(track) };
+}
+
+// No Navidrome artista e título já vêm separados nas tags; só tiramos sufixos
+// como "(Remastered 2011)" ou " - Ao Vivo", que atrapalham a busca da letra.
+function fromTags(track) {
+  const title = dropNoise(track.title || '').replace(/\s+[-–—]\s+[^-–—]*$/, (m) => (NOISE.test(m) ? '' : m));
+  return { artist: tidy(track.artist || ''), track: tidy(title) };
 }
 
 export function parseLrc(lrc = '') {
@@ -62,7 +72,7 @@ async function query(params) {
 export async function fetchLyrics(track, duration = 0) {
   if (cache.has(track.id)) return cache.get(track.id);
 
-  const { artist, track: name } = parseTitle(track.title, track.artist);
+  const { artist, track: name } = SOURCE === 'navidrome' ? fromTags(track) : parseTitle(track.title, track.artist);
   const tries = [];
   if (artist) tries.push({ params: { track_name: name, artist_name: artist } });
   tries.push({ params: { q: `${artist} ${name}`.trim() } });

@@ -70,6 +70,9 @@ function toTrack(s, c) {
     title: s.title || 'Sem título',
     artist: s.displayArtist || s.artist || '',
     album: s.album || '',
+    artistId: s.artistId || '',
+    genre: s.genre || '',
+    year: s.year || 0,
     duration: s.duration || 0,
     thumb: cover(s.coverArt, c),
   };
@@ -126,6 +129,37 @@ export async function getPlaylists() {
 export async function getStarred() {
   const c = creds();
   return ((await call('getStarred2')).starred2?.song || []).map((s) => toTrack(s, c));
+}
+
+/* ---------- matéria-prima dos mixes e do rádio ---------- */
+// Gêneros da biblioteca, do maior para o menor.
+export async function getGenres() {
+  const list = (await call('getGenres')).genres?.genre || [];
+  return list
+    .map((g) => ({ name: g.value || '', songs: g.songCount || 0 }))
+    .filter((g) => g.name)
+    .sort((a, b) => b.songs - a.songs);
+}
+
+// Sorteio do próprio servidor, opcionalmente por gênero ou faixa de anos.
+export async function getRandomSongs({ size = 50, genre, fromYear, toYear } = {}) {
+  const c = creds();
+  const r = await call('getRandomSongs', { size, genre, fromYear, toYear });
+  return (r.randomSongs?.song || []).map((s) => toTrack(s, c));
+}
+
+// Músicas de artistas parecidos (depende do Navidrome ter Last.fm/Deezer; sem isso volta vazio).
+export async function getSimilarSongs(id, count = 50) {
+  const c = creds();
+  return ((await call('getSimilarSongs2', { id, count })).similarSongs2?.song || []).map((s) => toTrack(s, c));
+}
+
+// Músicas de um artista, pela busca (filtra quem só cita o nome no título).
+export async function artistSongs(name, max = 40) {
+  const c = creds();
+  const key = name.toLowerCase();
+  const r = (await call('search3', { query: name, songCount: max, albumCount: 0, artistCount: 0 })).searchResult3 || {};
+  return (r.song || []).filter((s) => (s.artist || '').toLowerCase().includes(key)).map((s) => toTrack(s, c));
 }
 
 // Coleções: "starred", "album:<id>" ou "pl:<id>".

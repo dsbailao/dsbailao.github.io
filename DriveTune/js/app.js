@@ -34,6 +34,7 @@ function shuffleArr(a) {
 const ND_MODE = SOURCE === 'navidrome';
 const SOURCE_NAMES = { navidrome: 'Navidrome', youtube: 'YouTube' };
 const ndHome = ND_MODE ? store.get('home') : null;
+const ndMixCache = ND_MODE ? store.get('mixes') : null;
 
 const S = {
   queue: [], original: null, index: -1,
@@ -51,6 +52,7 @@ const S = {
   // Navidrome: início (cache para abrir rápido), biblioteca e álbuns achados na busca.
   ndRecent: ndHome?.recent || null, ndStarred: ndHome?.starred || null, ndHomeAt: 0,
   ndPlaylists: null, ndAlbums: null, ndLibLoading: false, ndFound: null, scrobbled: false,
+  ndMixes: ndMixCache?.mixes || null, ndMixesLoading: false, radio: false, radioLoading: false,
 };
 const lists = {};
 const TITLES = { home: 'Início', search: 'Buscar', library: 'Biblioteca', playlist: 'Playlist', mood: 'Humor', queue: 'Fila', playing: 'Tocando agora' };
@@ -343,6 +345,9 @@ function onClick(e) {
     case 'suggest-pick': doSearch(q); break;
     case 'suggest-fill': fillSuggestion(q); break;
     case 'artist-mix': playArtistMix(i); break;
+    case 'radio': startRadio(tracks?.[i]); break;
+    case 'nd-mix': playNdMix(i); break;
+    case 'nd-mixes-refresh': loadNdMixes({ force: true }); break;
     case 'recs-refresh': loadRecommendations({ force: true }); break;
     case 'switch-source': switchSource(); break;
     case 'theme': toggleTheme(); break;
@@ -455,8 +460,9 @@ function placePlayer() {
 }
 
 /* ---------- reprodução ---------- */
-function playList(tracks, start = 0, { shuffle = false } = {}) {
+function playList(tracks, start = 0, { shuffle = false, radio = false } = {}) {
   if (!tracks?.length) return;
+  S.radio = radio; // rádio e mixes do Navidrome crescem sozinhos quando a fila está acabando
   S.queue = tracks.slice();
   S.original = null;
   S.index = clamp(start, 0, S.queue.length - 1);
@@ -486,6 +492,7 @@ function playIndex(i) {
   renderLyrics();
   if (S.view === 'queue') renderQueue();
   saveSession(0);
+  if (S.radio && S.index >= S.queue.length - 3) extendRadio();
 }
 
 function togglePlay(forcePlay = false) {
@@ -726,15 +733,22 @@ function trackCard(t, listKey, i) {
   </button>`;
 }
 
-function trackRows(tracks, listKey) {
+// `radio`: tocar na música começa um rádio dela (busca do Navidrome). Nas outras listas
+// do Navidrome o rádio fica num botão ao lado, e o toque toca a lista na ordem.
+function trackRows(tracks, listKey, { radio = false } = {}) {
   lists[listKey] = tracks;
   const cur = current()?.id;
+  const tap = radio ? 'radio' : 'play-from';
+  const radioBtn = (i) => (ND_MODE && !radio
+    ? `<button class="icon-btn" data-action="radio" data-list="${listKey}" data-index="${i}" aria-label="Tocar rádio desta música">${icon('radio')}</button>`
+    : '');
   return `<ul class="tracks">${tracks.map((t, i) => `
     <li class="track${t.id === cur ? ' is-current' : ''}" data-id="${esc(t.id)}">
-      <button class="track-main" data-action="play-from" data-list="${listKey}" data-index="${i}">
+      <button class="track-main" data-action="${tap}" data-list="${listKey}" data-index="${i}">
         <img loading="lazy" src="${esc(t.thumb)}" alt="">
         <span class="track-text"><span class="track-t">${esc(t.title)}</span><span class="track-a">${esc(t.artist)}</span></span>
       </button>
+      ${radioBtn(i)}
       <button class="icon-btn" data-action="play-next" data-list="${listKey}" data-index="${i}" aria-label="Tocar a seguir">${icon('add')}</button>
     </li>`).join('')}</ul>`;
 }
@@ -868,7 +882,8 @@ function renderNdHome() {
   const el = $('#view-home');
   if (Date.now() - S.ndHomeAt > 120_000) loadNdHome(); // "Tocados recentemente" muda conforme você ouve
 
-  let html = sectionHead('Tocados recentemente', { kicker: ND.account()?.user || '' });
+  let html = ndMixRows();
+  html += sectionHead('Tocados recentemente');
   const recent = S.ndRecent;
   if (recent?.length) html += `<div class="row-scroll">${recent.map(playlistCard).join('')}</div>`;
   else html += recent ? emptyBlock('Os álbuns que você ouvir aparecem aqui.') : loadingBlock();
@@ -903,6 +918,163 @@ async function loadNdHome() {
     S.ndStarred ||= [];
   }
   if (S.view === 'home') renderHome();
+  loadNdMixes(); // depois das favoritas, que entram no "Mix das favoritas"
+}
+
+/* ---------- Navidrome: rádio e mixes ---------- */
+const MIX_TTL = 6 * 3600_000;
+const shuffled = (a) => shuffleArr(a.slice());
+const uniq = (tracks, seen) => tracks.filter((t) => !seen.has(t.id) && seen.add(t.id));
+
+// Músicas parecidas com `track`: primeiro as que o Navidrome indica (artistas semelhantes,
+// se ele tiver Last.fm/Deezer ligado), completando com o mesmo artista e o mesmo gênero
+// da sua biblioteca; se ainda faltar, sorteio geral.
+async function similarTo(track, size = 50, seen = new Set()) {
+  seen.add(track.id);
+  const [similar, sameArtist, sameGenre] = await Promise.all([
+    ND.getSimilarSongs(track.id, size).catch(() => []),
+    track.artist ? ND.artistSongs(track.artist, 20).catch(() => []) : [],
+    track.genre ? ND.getRandomSongs({ genre: track.genre, size }).catch(() => []) : [],
+  ]);
+  // As parecidas vêm primeiro (embaralhadas entre si); o sorteio geral só completa o final.
+  const close = shuffled(uniq([...similar, ...shuffled(sameArtist).slice(0, Math.ceil(size / 4)), ...sameGenre], seen));
+  const filler = close.length < size / 2 ? shuffled(uniq(await ND.getRandomSongs({ size }), seen)) : [];
+  return [...close, ...filler].slice(0, size);
+}
+
+// A música escolhida começa na hora; as parecidas entram na fila assim que chegam.
+async function startRadio(track) {
+  if (!track) return;
+  playList([track], 0, { radio: true });
+  toast(`Montando rádio de “${track.title}”…`);
+  const more = await guard(() => similarTo(track));
+  if (!more?.length || !S.radio || S.queue.length !== 1 || current()?.id !== track.id) return;
+  S.queue.push(...more);
+  S.original?.push(...more);
+  if (S.view === 'queue') renderQueue();
+  saveSession();
+  toast(`Rádio com ${more.length + 1} músicas`);
+}
+
+// Rádio sem fim: perto do final da fila, puxa mais músicas parecidas com a última.
+// Só evita repetir as 20 mais recentes, para não parar em bibliotecas pequenas.
+async function extendRadio() {
+  if (S.radioLoading || !S.queue.length) return;
+  S.radioLoading = true;
+  const seed = S.queue[S.queue.length - 1];
+  const more = await guard(() => similarTo(seed, 30, new Set(S.queue.slice(-20).map((t) => t.id))));
+  S.radioLoading = false;
+  if (!S.radio || !more?.length) return;
+  S.queue.push(...more);
+  S.original?.push(...more);
+  if (S.view === 'queue') renderQueue();
+  saveSession();
+}
+
+// Artistas que você mais ouve no DriveTunes (contagem local de reproduções).
+function topNdArtists(limit = 3) {
+  const score = new Map();
+  const add = (t, w) => {
+    if (!t?.artist) return;
+    const a = score.get(t.artist) || { name: t.artist, track: t, score: 0 };
+    a.score += w;
+    score.set(t.artist, a);
+  };
+  Object.values(store.get('plays', {})).forEach((p) => add(p.t, Math.min(p.n, 10)));
+  store.get('recent', []).forEach((t) => add(t, 1));
+  (S.ndStarred || []).forEach((t) => add(t, 1));
+  return [...score.values()].sort((a, b) => b.score - a.score).slice(0, limit);
+}
+
+const DECADES = [1960, 1970, 1980, 1990, 2000, 2010, 2020];
+
+// Monta todos os mixes de uma vez (abrem na hora no carro) e guarda por 6h.
+async function buildNdMixes() {
+  const genres = await ND.getGenres().catch(() => []);
+  const jobs = [];
+  const starred = S.ndStarred || [];
+  if (starred.length) {
+    jobs.push(async () => {
+      const seen = new Set(starred.map((t) => t.id));
+      const seeds = shuffled(starred).slice(0, 3);
+      const similar = (await Promise.all(seeds.map((t) => similarTo(t, 15, seen)))).flat();
+      return { name: 'Mix das favoritas', desc: 'Suas favoritas e músicas parecidas', tracks: shuffled([...shuffled(starred).slice(0, 25), ...similar]) };
+    });
+  }
+  topNdArtists().forEach((a) => jobs.push(async () => {
+    const own = await ND.artistSongs(a.name, 30);
+    const seen = new Set(own.map((t) => t.id));
+    const similar = await similarTo(own[0] || a.track, 35, seen);
+    return { name: `Mix ${a.name}`, desc: `${a.name} e artistas parecidos`, tracks: shuffled([...shuffled(own).slice(0, 15), ...similar]) };
+  }));
+  genres.filter((g) => g.songs >= 10).slice(0, 4).forEach((g) => jobs.push(async () => (
+    { name: `Mix ${g.name}`, desc: `O melhor de ${g.name} na sua biblioteca`, tracks: await ND.getRandomSongs({ genre: g.name, size: 50 }) }
+  )));
+  jobs.push(async () => ({ name: 'Descobertas', desc: 'Músicas da sua biblioteca para redescobrir', tracks: await ND.getRandomSongs({ size: 50 }) }));
+  DECADES.forEach((y) => jobs.push(async () => ({
+    era: true,
+    name: `Anos ${String(y).slice(2)}`,
+    desc: `Músicas de ${y} a ${y + 9}`,
+    tracks: await ND.getRandomSongs({ fromYear: y, toYear: y + 9, size: 50 }),
+  })));
+
+  const settled = await Promise.allSettled(jobs.map((job) => job()));
+  const failed = settled.find((r) => r.status === 'rejected');
+  const mixes = settled.filter((r) => r.status === 'fulfilled' && r.value.tracks.length >= 5).map((r) => r.value);
+  if (!mixes.length && failed) throw failed.reason;
+  // Capa de cada mix: a primeira música com uma capa ainda não usada por outro mix.
+  const used = new Set();
+  mixes.forEach((m) => {
+    m.thumb = (m.tracks.find((t) => t.thumb && !used.has(t.thumb)) || m.tracks[0]).thumb;
+    used.add(m.thumb);
+  });
+  return mixes;
+}
+
+async function loadNdMixes({ force = false } = {}) {
+  const cached = store.get('mixes');
+  if (S.ndMixesLoading || (!force && cached && Date.now() - cached.at < MIX_TTL)) return;
+  S.ndMixesLoading = true;
+  if (S.view === 'home') renderHome();
+  const mixes = await guard(buildNdMixes);
+  S.ndMixesLoading = false;
+  if (mixes) {
+    S.ndMixes = mixes;
+    store.set('mixes', { at: Date.now(), mixes });
+    if (force) toast('Mixes atualizados');
+  } else {
+    S.ndMixes ||= [];
+  }
+  if (S.view === 'home') renderHome();
+}
+
+function playNdMix(i) {
+  const m = S.ndMixes?.[i];
+  if (!m) return;
+  playList(m.tracks, 0, { radio: true });
+  navigate('playing');
+}
+
+function ndMixCard(m, i) {
+  return `<button class="card" data-action="nd-mix" data-index="${i}">
+    <div class="card-img mix">
+      ${m.thumb ? `<img loading="lazy" src="${esc(m.thumb)}" alt="">` : ''}
+      <span class="mix-label">${icon(m.era ? 'history' : 'shuffle')}<span>${m.era ? 'Época' : 'Mix'}</span></span>
+    </div>
+    <span class="card-t">${esc(m.name)}</span>
+    <span class="card-s">${esc(m.desc)}</span>
+  </button>`;
+}
+
+function ndMixRows() {
+  const all = S.ndMixes || [];
+  const refresh = `<button class="icon-btn" data-action="nd-mixes-refresh" aria-label="Refazer os mixes" ${S.ndMixesLoading ? 'disabled' : ''}>${icon('refresh')}</button>`;
+  let html = sectionHead('Mixes para você', { kicker: ND.account()?.user || '', action: refresh });
+  const row = (era) => all.map((m, i) => (!!m.era === era ? ndMixCard(m, i) : '')).join('');
+  if (all.some((m) => !m.era)) html += `<div class="row-scroll">${row(false)}</div>`;
+  else html += S.ndMixesLoading || !S.ndMixes ? loadingBlock('Montando mixes com a sua biblioteca…') : emptyBlock('Não deu para montar mixes agora. Toque em ⟳ para tentar de novo.');
+  if (all.some((m) => m.era)) html += sectionHead('Viagem no tempo') + `<div class="row-scroll">${row(true)}</div>`;
+  return html;
 }
 
 function renderNdLibrary() {
@@ -1288,10 +1460,14 @@ async function doSearch(query, { autoplay = false } = {}) {
   const albums = ND_MODE ? res.albums : [];
   if (ND_MODE) S.ndFound = albums;
   let html = albums.length ? `${sectionHead('Álbuns')}<div class="row-scroll">${albums.map(playlistCard).join('')}</div>` : '';
-  if (tracks.length) html += (albums.length ? sectionHead('Músicas') : '') + trackRows(tracks, 'search');
+  if (tracks.length) {
+    html += (albums.length ? sectionHead('Músicas') : '') + trackRows(tracks, 'search', { radio: ND_MODE });
+    if (ND_MODE) html += `<p class="hint">Toque numa música para tocar um rádio com ela e outras parecidas.</p>`;
+  }
   body.innerHTML = html || emptyBlock('Nenhum resultado.');
   if (autoplay && tracks.length) {
-    playList(tracks, 0);
+    if (ND_MODE) startRadio(tracks[0]);
+    else playList(tracks, 0);
     navigate('playing');
   }
 }
@@ -1537,6 +1713,7 @@ function saveSession(time) {
     shuffle: S.shuffle,
     repeat: S.repeat,
     mode: S.mode,
+    radio: S.radio,
   });
 }
 
@@ -1547,6 +1724,7 @@ function restoreSession() {
   S.index = clamp(s.index ?? 0, 0, s.queue.length - 1);
   S.shuffle = !!s.shuffle;
   S.repeat = s.repeat || 'off';
+  S.radio = !!s.radio;
   // Por segurança nunca reabre direto no modo vídeo (o carro pode estar em movimento).
   S.mode = s.mode === 'lyrics' ? 'lyrics' : 'cover';
   S.resumeAt = s.time || 0;

@@ -83,6 +83,8 @@ async function boot() {
   initPwa();
   initAutoFullscreen();
   renderSourceButton();
+  renderThemeButton();
+  window.DriveTheme.onChange(renderThemeButton);
 
   if (ND_MODE) {
     if (ND.isConnected()) enterApp();
@@ -343,7 +345,22 @@ function onClick(e) {
     case 'artist-mix': playArtistMix(i); break;
     case 'recs-refresh': loadRecommendations({ force: true }); break;
     case 'switch-source': switchSource(); break;
+    case 'theme': toggleTheme(); break;
   }
+}
+
+/* ---------- modo dia / noite ---------- */
+// O horário (dia das 7h às 16h, noite das 16h às 7h) fica em js/theme.js; aqui só o botão do topo.
+function toggleTheme() {
+  const { theme, until } = window.DriveTheme.toggle();
+  toast(`${theme === 'light' ? 'Modo dia' : 'Modo noite'} até as ${new Date(until).getHours()}h`);
+}
+
+function renderThemeButton(theme = window.DriveTheme.current) {
+  const toDay = theme !== 'light';
+  const btn = $('#btn-theme');
+  btn.querySelector('use').setAttribute('href', toDay ? '#i-sun' : '#i-moon');
+  btn.setAttribute('aria-label', toDay ? 'Mudar para o modo dia' : 'Mudar para o modo noite');
 }
 
 /* ---------- troca de fonte (Navidrome ⇄ YouTube) ---------- */

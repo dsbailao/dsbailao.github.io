@@ -2,14 +2,14 @@
 // Necessário para o Chrome oferecer "Instalar app". Estratégia "rede primeiro":
 // sempre busca a versão mais nova e só usa o cache se estiver sem internet,
 // para que as atualizações publicadas cheguem na hora.
-const CACHE = 'drivetunes-v4';
+const CACHE = 'drivetunes-v5';
 const SHELL = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/styles.css',
   'js/app.js', 'js/auth.js', 'js/config.js', 'js/lyrics.js', 'js/md5.js', 'js/media.js',
-  'js/navidrome.js', 'js/player.js', 'js/store.js', 'js/suggest.js', 'js/youtube.js',
+  'js/navidrome.js', 'js/player.js', 'js/store.js', 'js/suggest.js', 'js/theme.js', 'js/youtube.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

@@ -52,7 +52,7 @@ const S = {
   // Navidrome: início (cache para abrir rápido), biblioteca e álbuns achados na busca.
   ndRecent: ndHome?.recent || null, ndStarred: ndHome?.starred || null, ndHomeAt: 0,
   ndPlaylists: null, ndAlbums: null, ndLibLoading: false, ndFound: null, scrobbled: false,
-  ndMixes: ndMixCache?.mixes || null, ndMixesLoading: false, radio: false, radioLoading: false,
+  ndMixes: ndMixCache?.mixes || null, ndMixesAt: ndMixCache?.at || 0, ndMixesLoading: false, radio: false, radioLoading: false,
 };
 const lists = {};
 const TITLES = { home: 'Início', search: 'Buscar', library: 'Biblioteca', playlist: 'Playlist', mood: 'Humor', queue: 'Fila', playing: 'Tocando agora' };
@@ -97,15 +97,16 @@ async function boot() {
   const clientId = CONFIG.GOOGLE_CLIENT_ID || store.get('clientId');
   if (!clientId) return showScreen('setup');
 
+  // Já logou antes? Entra direto, sem esperar o script de login do Google baixar:
+  // a reprodução não depende do token, e se ele expirou pedimos para reconectar só quando precisar.
+  const loggedBefore = getToken() || S.profile;
+  if (loggedBefore) enterApp();
   try {
     await initAuth(clientId);
   } catch {
     toast('Não foi possível carregar o login do Google. Verifique a internet.');
   }
-  // Já logou antes? Entra direto: a reprodução não depende do token,
-  // e se ele expirou pedimos para reconectar só quando precisar.
-  if (getToken() || S.profile) enterApp();
-  else showScreen('login');
+  if (!loggedBefore) showScreen('login');
 }
 
 function showScreen(name) {
@@ -708,7 +709,7 @@ const emptyBlock = (txt) => `<div class="state"><p>${esc(txt)}</p></div>`;
 
 function playlistCard(p) {
   return `<button class="card" data-action="open-playlist" data-id="${esc(p.id)}">
-    <div class="card-img">${p.thumb ? `<img loading="lazy" src="${esc(p.thumb)}" alt="">` : icon('queue')}</div>
+    <div class="card-img">${p.thumb ? `<img loading="lazy" decoding="async" src="${esc(p.thumb)}" alt="">` : icon('queue')}</div>
     <span class="card-t">${esc(p.title)}</span>
     <span class="card-s">${esc(p.reason || `${p.count} músicas`)}</span>
   </button>`;
@@ -717,7 +718,7 @@ function playlistCard(p) {
 function mixCard(m, i) {
   return `<button class="card" data-action="artist-mix" data-index="${i}">
     <div class="card-img mix">
-      ${m.thumb ? `<img loading="lazy" src="${esc(m.thumb)}" alt="">` : ''}
+      ${m.thumb ? `<img loading="lazy" decoding="async" src="${esc(m.thumb)}" alt="">` : ''}
       <span class="mix-label">${icon('shuffle')}<span>Mix</span></span>
     </div>
     <span class="card-t">${esc(m.name)}</span>
@@ -727,7 +728,7 @@ function mixCard(m, i) {
 
 function trackCard(t, listKey, i) {
   return `<button class="card" data-action="play-from" data-list="${listKey}" data-index="${i}">
-    <div class="card-img wide"><img loading="lazy" src="${esc(t.thumb)}" alt=""></div>
+    <div class="card-img wide"><img loading="lazy" decoding="async" src="${esc(t.thumb)}" alt=""></div>
     <span class="card-t">${esc(t.title)}</span>
     <span class="card-s">${esc(t.artist)}</span>
   </button>`;
@@ -745,7 +746,7 @@ function trackRows(tracks, listKey, { radio = false } = {}) {
   return `<ul class="tracks">${tracks.map((t, i) => `
     <li class="track${t.id === cur ? ' is-current' : ''}" data-id="${esc(t.id)}">
       <button class="track-main" data-action="${tap}" data-list="${listKey}" data-index="${i}">
-        <img loading="lazy" src="${esc(t.thumb)}" alt="">
+        <img loading="lazy" decoding="async" src="${esc(t.thumb)}" alt="">
         <span class="track-text"><span class="track-t">${esc(t.title)}</span><span class="track-a">${esc(t.artist)}</span></span>
       </button>
       ${radioBtn(i)}
@@ -757,7 +758,7 @@ function trackRows(tracks, listKey, { radio = false } = {}) {
 // "Escolhas rápidas", mixes, "Da sua biblioteca" (só playlists de música) e sugestões.
 function squareCard(t, listKey, i) {
   return `<button class="card sq" data-action="play-from" data-list="${listKey}" data-index="${i}">
-    <div class="card-img"><img loading="lazy" src="${esc(t.thumb)}" alt=""></div>
+    <div class="card-img"><img loading="lazy" decoding="async" src="${esc(t.thumb)}" alt=""></div>
     <span class="card-t">${esc(t.title)}</span>
     <span class="card-s">${esc(t.artist)}</span>
   </button>`;
@@ -765,7 +766,7 @@ function squareCard(t, listKey, i) {
 
 function quickRow(t, listKey, i) {
   return `<button class="qp" data-action="play-from" data-list="${listKey}" data-index="${i}">
-    <img loading="lazy" src="${esc(t.thumb)}" alt="">
+    <img loading="lazy" decoding="async" src="${esc(t.thumb)}" alt="">
     <span class="qp-text"><span class="qp-t">${esc(t.title)}</span><span class="qp-a">${esc(t.artist)}</span></span>
   </button>`;
 }
@@ -909,15 +910,21 @@ function renderNdHome() {
 async function loadNdHome() {
   S.ndHomeAt = Date.now();
   const res = await guard(() => Promise.all([ND.getAlbums('recent', 20), ND.getStarred()]));
+  let changed = true;
   if (res) {
+    const before = JSON.stringify({ recent: S.ndRecent, starred: S.ndStarred?.slice(0, 40) });
     [S.ndRecent, S.ndStarred] = res;
     S.playlistCache.set('starred', S.ndStarred);
-    store.set('home', { recent: S.ndRecent, starred: S.ndStarred.slice(0, 40) });
+    lists.starred = S.ndStarred; // o "Aleatório" usa a lista completa, não só as 40 do cache
+    const home = JSON.stringify({ recent: S.ndRecent, starred: S.ndStarred.slice(0, 40) });
+    // Igual ao que já está na tela (o caso comum ao abrir): não redesenha à toa.
+    changed = home !== before;
+    if (changed) store.set('home', JSON.parse(home));
   } else {
     S.ndRecent ||= [];
     S.ndStarred ||= [];
   }
-  if (S.view === 'home') renderHome();
+  if (changed && S.view === 'home') renderHome();
   loadNdMixes(); // depois das favoritas, que entram no "Mix das favoritas"
 }
 
@@ -989,6 +996,22 @@ function topNdArtists(limit = 3) {
 const DECADES = [1960, 1970, 1980, 1990, 2000, 2010, 2020];
 
 // Monta todos os mixes de uma vez (abrem na hora no carro) e guarda por 6h.
+// Como Promise.allSettled, mas com no máximo `n` tarefas por vez: montar todos os mixes
+// de uma vez são dezenas de pedidos ao servidor, que travam aparelhos fracos e atrasam
+// as capas da tela inicial.
+async function settleLimited(jobs, n) {
+  const out = [];
+  let next = 0;
+  const worker = async () => {
+    while (next < jobs.length) {
+      const i = next++;
+      try { out[i] = { status: 'fulfilled', value: await jobs[i]() }; } catch (reason) { out[i] = { status: 'rejected', reason }; }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(n, jobs.length) }, worker));
+  return out;
+}
+
 async function buildNdMixes() {
   const genres = await ND.getGenres().catch(() => []);
   const jobs = [];
@@ -1018,7 +1041,7 @@ async function buildNdMixes() {
     tracks: await ND.getRandomSongs({ fromYear: y, toYear: y + 9, size: 50 }),
   })));
 
-  const settled = await Promise.allSettled(jobs.map((job) => job()));
+  const settled = await settleLimited(jobs, 3);
   const failed = settled.find((r) => r.status === 'rejected');
   const mixes = settled.filter((r) => r.status === 'fulfilled' && r.value.tracks.length >= 5).map((r) => r.value);
   if (!mixes.length && failed) throw failed.reason;
@@ -1032,15 +1055,17 @@ async function buildNdMixes() {
 }
 
 async function loadNdMixes({ force = false } = {}) {
-  const cached = store.get('mixes');
-  if (S.ndMixesLoading || (!force && cached && Date.now() - cached.at < MIX_TTL)) return;
+  if (S.ndMixesLoading || (!force && S.ndMixes?.length && Date.now() - S.ndMixesAt < MIX_TTL)) return;
   S.ndMixesLoading = true;
-  if (S.view === 'home') renderHome();
+  // Com mixes antigos na tela, eles continuam lá enquanto os novos são montados; só trava o ⟳.
+  if (S.ndMixes?.length) $('[data-action="nd-mixes-refresh"]')?.setAttribute('disabled', '');
+  else if (S.view === 'home') renderHome();
   const mixes = await guard(buildNdMixes);
   S.ndMixesLoading = false;
   if (mixes) {
     S.ndMixes = mixes;
-    store.set('mixes', { at: Date.now(), mixes });
+    S.ndMixesAt = Date.now();
+    store.set('mixes', { at: S.ndMixesAt, mixes });
     if (force) toast('Mixes atualizados');
   } else {
     S.ndMixes ||= [];
@@ -1058,7 +1083,7 @@ function playNdMix(i) {
 function ndMixCard(m, i) {
   return `<button class="card" data-action="nd-mix" data-index="${i}">
     <div class="card-img mix">
-      ${m.thumb ? `<img loading="lazy" src="${esc(m.thumb)}" alt="">` : ''}
+      ${m.thumb ? `<img loading="lazy" decoding="async" src="${esc(m.thumb)}" alt="">` : ''}
       <span class="mix-label">${icon(m.era ? 'history' : 'shuffle')}<span>${m.era ? 'Época' : 'Mix'}</span></span>
     </div>
     <span class="card-t">${esc(m.name)}</span>
@@ -1426,7 +1451,7 @@ function renderQueue() {
       <li class="track${i === S.index ? ' is-current' : ''}" data-id="${esc(t.id)}">
         <button class="track-main" data-action="jump" data-index="${i}">
           <span class="track-num">${i === S.index ? icon('now') : i + 1}</span>
-          <img loading="lazy" src="${esc(t.thumb)}" alt="">
+          <img loading="lazy" decoding="async" src="${esc(t.thumb)}" alt="">
           <span class="track-text"><span class="track-t">${esc(t.title)}</span><span class="track-a">${esc(t.artist)}</span></span>
         </button>
         ${i === S.index ? '' : `<button class="icon-btn" data-action="queue-remove" data-index="${i}" aria-label="Remover da fila">${icon('close')}</button>`}

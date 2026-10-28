@@ -41,7 +41,10 @@ export function initPlayer(elementId) {
         },
       });
     };
-    loadScript('https://www.youtube.com/iframe_api');
+    // O player do YouTube é pesado (script + iframe próprio); fica para logo depois da
+    // primeira pintura, para a tela inicial aparecer antes em aparelhos fracos.
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 300));
+    idle(() => loadScript('https://www.youtube.com/iframe_api'), { timeout: 2000 });
   });
   return readyPromise;
 }

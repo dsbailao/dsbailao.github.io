@@ -5,7 +5,7 @@
 // a versão mais nova é baixada e guardada. Uma atualização publicada aparece na próxima
 // vez que o app for aberto. Ao publicar, troque o número em CACHE para que tudo seja
 // baixado de novo de uma vez.
-const CACHE = 'drivetunes-v7';
+const CACHE = 'drivetunes-v8';
 const SHELL = [
   './',
   'index.html',

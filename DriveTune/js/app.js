@@ -422,6 +422,7 @@ function warnVideo() {
 
 function toggleVideo() {
   S.showVideo = !S.showVideo;
+  $('#view-playing').dataset.video = S.showVideo;
   if (S.showVideo) warnVideo();
   const btn = $('#btn-art-toggle');
   btn.setAttribute('aria-pressed', S.showVideo);
@@ -547,6 +548,7 @@ function toggleShuffle() {
   toast(S.shuffle ? 'Aleatório ativado' : 'Aleatório desativado');
   updateButtons();
   if (S.view === 'queue') renderQueue();
+  renderPlayingQueue();
   saveSession();
 }
 
@@ -564,6 +566,7 @@ function playNext(track) {
   S.original?.push(track);
   toast('Vai tocar a seguir');
   if (S.view === 'queue') renderQueue();
+  renderPlayingQueue();
   saveSession();
 }
 
@@ -576,6 +579,7 @@ function removeFromQueue(i) {
     if (k >= 0) S.original.splice(k, 1);
   }
   renderQueue();
+  renderPlayingQueue();
   saveSession();
 }
 
@@ -585,6 +589,7 @@ function clearQueue() {
   S.original = null;
   S.index = t ? 0 : -1;
   renderQueue();
+  renderPlayingQueue();
   saveSession();
 }
 
@@ -676,6 +681,10 @@ function tick() {
 /* ---------- atualização da interface ---------- */
 function updateNowPlaying() {
   const t = current();
+  const slot = $('#slot-cover');
+  const trackKey = t ? `${S.index}:${t.id}` : '';
+  const changed = slot.dataset.trackKey !== trackKey;
+  slot.dataset.trackKey = trackKey;
   $$('.js-title').forEach((e) => { e.textContent = t?.title || 'Nada tocando'; });
   $$('.js-artist').forEach((e) => { e.textContent = t?.artist || ''; });
   $('#mini').hidden = !t || S.view === 'playing';
@@ -683,6 +692,15 @@ function updateNowPlaying() {
   $('#np-empty').hidden = !!t;
   $('#np-bg').style.backgroundImage = t ? `url("${t.thumb}")` : '';
   document.documentElement.style.setProperty('--cover', t ? `url("${t.thumb}")` : 'none');
+  renderPlayingQueue();
+  if (changed) {
+    const list = $('#np-queue-list');
+    const active = list.querySelector('.is-current');
+    if (active) list.scrollTop = Math.max(0, active.offsetTop - list.offsetTop - list.clientHeight / 2 + active.offsetHeight / 2);
+  }
+  if (changed && t && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && slot.animate) {
+    slot.animate([{ opacity: 0.3, transform: 'translateX(24px) scale(.94)' }, { opacity: 1, transform: 'translateX(0) scale(1)' }], { duration: 380, easing: 'ease-out' });
+  }
   $$('.track[data-id]').forEach((li) => li.classList.toggle('is-current', li.dataset.id === t?.id));
   Media.setMeta(t);
   if (S.view === 'home') renderHome();
@@ -957,6 +975,7 @@ async function startRadio(track) {
   const more = await guard(() => similarTo(track));
   if (!more?.length || !S.radio || S.queue.length !== 1 || current()?.id !== track.id) return;
   S.queue.push(...more);
+  renderPlayingQueue();
   S.original?.push(...more);
   if (S.view === 'queue') renderQueue();
   saveSession();
@@ -973,6 +992,7 @@ async function extendRadio() {
   S.radioLoading = false;
   if (!S.radio || !more?.length) return;
   S.queue.push(...more);
+  renderPlayingQueue();
   S.original?.push(...more);
   if (S.view === 'queue') renderQueue();
   saveSession();
@@ -1439,6 +1459,20 @@ function fillSuggestion(q) {
   updateSuggest(q);
 }
 
+function renderPlayingQueue() {
+  const list = $('#np-queue-list');
+  const stack = $('#np-art-stack');
+  $('#np-queue-count').textContent = `${S.queue.length} ${S.queue.length === 1 ? 'música' : 'músicas'}`;
+  list.innerHTML = S.queue.map((t, i) => `
+    <button class="np-queue-item${i === S.index ? ' is-current' : ''}" data-action="jump" data-index="${i}" ${i === S.index ? 'aria-current="true"' : ''}>
+      <span class="np-queue-number">${i === S.index ? icon('now') : i + 1}</span>
+      ${t.thumb ? `<img loading="lazy" decoding="async" src="${esc(t.thumb)}" alt="">` : `<span class="np-queue-placeholder">${icon('album')}</span>`}
+      <span class="np-queue-text"><strong>${esc(t.title)}</strong><span>${esc(t.artist || '')}</span></span>
+    </button>`).join('');
+  stack.innerHTML = S.queue.slice(S.index + 1, S.index + 5).map((t, i) =>
+    `<div class="np-stack-card np-stack-${i}">${t.thumb ? `<img src="${esc(t.thumb)}" alt="">` : ''}</div>`).join('');
+}
+
 function renderQueue() {
   const el = $('#view-queue');
   if (!S.queue.length) {
@@ -1807,7 +1841,8 @@ function fitSlots() {
     // Em retrato a capa 16:9 ocupa a largura toda (altura automática); o CSS já resolve.
     if (PORTRAIT.matches && box.classList.contains('np-art') && !ND_MODE) { slot.style.width = ''; continue; }
     if (!box.clientWidth || !box.clientHeight) continue;
-    const w = `${Math.floor(Math.min(box.clientWidth, box.clientHeight * SLOT_RATIO))}px`;
+    const ratio = box.classList.contains('np-art') && !S.showVideo ? 1 : SLOT_RATIO;
+    const w = `${Math.floor(Math.min(box.clientWidth, box.clientHeight * ratio))}px`;
     if (slot.style.width !== w) slot.style.width = w;
   }
 }

@@ -185,7 +185,8 @@
 
         <div class="np-body" id="np-body">
           <div class="np-pane np-cover" data-pane="cover">
-            <div class="np-art"><div class="player-slot" id="slot-cover"></div></div>
+            <div class="np-main">
+            <div class="np-art"><div class="np-art-stack" id="np-art-stack" aria-hidden="true"></div><div class="player-slot" id="slot-cover"></div></div>
             <div class="np-side">
               <div class="np-meta">
                 <h2 class="np-title js-title"></h2>
@@ -198,6 +199,11 @@
               <div data-progress></div>
               <div data-controls></div>
             </div>
+            </div>
+            <aside class="np-queue" aria-label="Fila de reprodução">
+              <div class="np-queue-head"><div><span class="np-queue-label">SUA MÚSICA</span><h3>Fila de reprodução</h3></div><span id="np-queue-count"></span></div>
+              <div class="np-queue-list" id="np-queue-list"></div>
+            </aside>
           </div>
 
           <div class="np-pane np-lyrics" data-pane="lyrics" hidden>

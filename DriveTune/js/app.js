@@ -51,7 +51,8 @@ const S = {
   overlayTimer: null,
   // Navidrome: início (cache para abrir rápido), biblioteca e álbuns achados na busca.
   ndRecent: ndHome?.recent || null, ndStarred: ndHome?.starred || null, ndHomeAt: 0,
-  ndPlaylists: null, ndAlbums: null, ndLibLoading: false, ndFound: null, scrobbled: false,
+  ndPlaylists: null, ndAlbums: null, ndArtists: null, ndLibLoading: false, ndFound: null, scrobbled: false,
+  libTab: store.get('libTab', 'artists'), libFilter: '',
   ndMixes: ndMixCache?.mixes || null, ndMixesAt: ndMixCache?.at || 0, ndMixesLoading: false, radio: false, radioLoading: false,
 };
 const lists = {};
@@ -241,6 +242,7 @@ function bindEvents() {
       showScreen('app');
       S.ndPlaylists = null;
       S.ndAlbums = null;
+      S.ndArtists = null;
       loadNdHome();
       if (S.view === 'library') renderLibrary();
     } catch (err) {
@@ -307,7 +309,7 @@ function onClick(e) {
 
   const el = e.target.closest('[data-action]');
   if (!el) return;
-  const { action, list, index, id, q } = el.dataset;
+  const { action, list, index, id, q, artist, tab } = el.dataset;
   const tracks = lists[list];
   const i = Number(index);
 
@@ -325,6 +327,17 @@ function onClick(e) {
     case 'queue-remove': removeFromQueue(i); break;
     case 'queue-clear': clearQueue(); break;
     case 'open-playlist': openPlaylist(id); break;
+    case 'open-artist': openArtist(artist); break;
+    case 'play-artist': playArtist(artist, { shuffle: false }); break;
+    case 'shuffle-artist': playArtist(artist, { shuffle: true }); break;
+    case 'lib-tab': setLibTab(tab); break;
+    case 'lib-clear-filter': {
+      S.libFilter = '';
+      const input = $('#lib-filter');
+      if (input) { input.value = ''; input.focus(); }
+      filterArtistGroups('');
+      break;
+    }
     case 'shuffle-liked': shuffleLiked(); break;
     case 'voice': startVoice(); break;
     case 'mood': openMood(i); break;
@@ -1122,15 +1135,180 @@ function ndMixRows() {
   return html;
 }
 
+/* ---------- agrupamento por artista e biblioteca Navidrome ---------- */
+function groupAlbumsByArtist(albums) {
+  if (!albums || !albums.length) return [];
+  const map = new Map();
+  for (const album of albums) {
+    const artistName = (album.artist || album.reason || 'Desconhecido').trim();
+    const key = artistName.toLowerCase();
+    let group = map.get(key);
+    if (!group) {
+      group = {
+        id: `artist:${encodeURIComponent(artistName)}`,
+        artistId: album.artistId || '',
+        name: artistName,
+        thumb: album.thumb || '',
+        albums: [],
+        totalTracks: 0,
+      };
+      map.set(key, group);
+    }
+    group.albums.push(album);
+    group.totalTracks += (album.count || 0);
+    if (!group.thumb && album.thumb) group.thumb = album.thumb;
+  }
+  for (const group of map.values()) {
+    group.albums.sort((a, b) => (b.year || 0) - (a.year || 0) || a.title.localeCompare(b.title));
+  }
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+}
+
+function artistGroupBlock(a) {
+  return `<div class="artist-group" data-artist="${esc(a.name)}">
+    <div class="artist-group-head">
+      <button class="artist-info-btn" data-action="open-artist" data-artist="${esc(a.name)}" aria-label="Abrir ${esc(a.name)}">
+        <div class="artist-avatar">
+          ${a.thumb ? `<img src="${esc(a.thumb)}" alt="" loading="lazy" decoding="async">` : icon('now')}
+        </div>
+        <div class="artist-titles">
+          <span class="artist-name">${esc(a.name)}</span>
+          <span class="artist-count">${a.albums.length} ${a.albums.length === 1 ? 'álbum' : 'álbuns'} • ${a.totalTracks} ${a.totalTracks === 1 ? 'música' : 'músicas'}</span>
+        </div>
+      </button>
+      <div class="artist-group-actions">
+        <button class="btn btn-sm" data-action="play-artist" data-artist="${esc(a.name)}" aria-label="Tocar músicas de ${esc(a.name)}">${icon('play')}<span>Tocar</span></button>
+        <button class="btn btn-sm" data-action="shuffle-artist" data-artist="${esc(a.name)}" aria-label="Tocar músicas de ${esc(a.name)} em ordem aleatória">${icon('shuffle')}<span>Aleatório</span></button>
+      </div>
+    </div>
+    <div class="row-scroll artist-albums-row">
+      ${a.albums.map(playlistCard).join('')}
+    </div>
+  </div>`;
+}
+
+function filterArtistGroups(query) {
+  const q = String(query || '').trim().toLowerCase();
+  const groups = $$('.artist-group');
+  let visible = 0;
+  groups.forEach((el) => {
+    const artistName = (el.dataset.artist || '').toLowerCase();
+    const match = !q || artistName.includes(q);
+    el.hidden = !match;
+    if (match) visible++;
+  });
+  const emptyEl = $('#lib-filter-empty');
+  if (emptyEl) {
+    emptyEl.hidden = visible > 0;
+    if (visible === 0) {
+      emptyEl.innerHTML = `<p>Nenhum artista encontrado para “${esc(query)}”.</p>`;
+    }
+  }
+}
+
+function bindLibFilter() {
+  const input = $('#lib-filter');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    S.libFilter = input.value;
+    filterArtistGroups(input.value);
+  });
+}
+
+function setLibTab(tab) {
+  S.libTab = tab;
+  store.set('libTab', tab);
+  renderLibrary();
+}
+
+function openArtist(name) {
+  if (!name) return;
+  openPlaylist(`artist:${encodeURIComponent(name)}`);
+}
+
+async function playArtist(name, { shuffle = false } = {}) {
+  if (!name) return;
+  const id = `artist:${encodeURIComponent(name)}`;
+  const key = `pl:${id}`;
+  let tracks = S.playlistCache.get(id);
+  if (!tracks) {
+    toast(`Carregando músicas de ${name}…`);
+    tracks = await guard(() => loadTracks(id));
+    if (!tracks?.length) {
+      toast(`Não foi possível carregar as músicas de ${name}.`);
+      return;
+    }
+    S.playlistCache.set(id, tracks);
+  }
+  lists[key] = tracks;
+  playList(tracks, 0, { shuffle });
+  navigate('playing');
+}
+
 function renderNdLibrary() {
   const el = $('#view-library');
-  let html = `<div class="grid">${starredCard()}${(S.ndPlaylists || []).map(playlistCard).join('')}</div>`;
-  if (!S.ndPlaylists) html += loadingBlock('Carregando playlists…');
-  html += sectionHead('Álbuns');
-  if (!S.ndAlbums) html += loadingBlock('Carregando álbuns…');
-  else html += S.ndAlbums.length ? `<div class="grid">${S.ndAlbums.map(playlistCard).join('')}</div>` : emptyBlock('Nenhum álbum na biblioteca.');
+  const tab = S.libTab || 'artists';
+
+  let html = `
+    <div class="lib-toolbar">
+      <div class="chips lib-tabs" role="tablist" aria-label="Visualização da biblioteca">
+        <button class="chip lib-chip ${tab === 'artists' ? 'active' : ''}" data-action="lib-tab" data-tab="artists">Artistas</button>
+        <button class="chip lib-chip ${tab === 'albums' ? 'active' : ''}" data-action="lib-tab" data-tab="albums">Álbuns</button>
+        <button class="chip lib-chip ${tab === 'playlists' ? 'active' : ''}" data-action="lib-tab" data-tab="playlists">Playlists</button>
+      </div>
+      ${tab === 'artists' && (S.ndArtists?.length || 0) > 4 ? `
+        <div class="lib-filter-wrap">
+          <svg class="ic lib-filter-ic"><use href="#i-search"/></svg>
+          <input id="lib-filter" type="search" placeholder="Filtrar artistas…" value="${esc(S.libFilter || '')}" autocomplete="off" spellcheck="false">
+          ${S.libFilter ? `<button class="icon-btn icon-btn-sm" data-action="lib-clear-filter" aria-label="Limpar filtro">${icon('close')}</button>` : ''}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if (!S.ndPlaylists && !S.ndAlbums) {
+    html += loadingBlock('Carregando sua biblioteca…');
+    el.innerHTML = html;
+    loadNdLibrary();
+    return;
+  }
+
+  if (tab === 'playlists') {
+    html += sectionHead('Playlists e Favoritas', { kicker: `${(S.ndPlaylists?.length || 0) + 1} no total` });
+    html += `<div class="grid">${starredCard()}${(S.ndPlaylists || []).map(playlistCard).join('')}</div>`;
+  } else if (tab === 'albums') {
+    html += sectionHead('Todos os álbuns', { kicker: `${(S.ndAlbums?.length || 0)} no total` });
+    if (!S.ndAlbums?.length) {
+      html += emptyBlock('Nenhum álbum na biblioteca.');
+    } else {
+      html += `<div class="grid">${S.ndAlbums.map(playlistCard).join('')}</div>`;
+    }
+  } else {
+    // Modo padrão: Artistas agrupados com seus álbuns
+    html += sectionHead('Playlists', {
+      action: `<button class="link" data-action="lib-tab" data-tab="playlists">Ver todas</button>`
+    });
+    html += `<div class="row-scroll lib-quick-row">${starredCard()}${(S.ndPlaylists || []).slice(0, 6).map(playlistCard).join('')}</div>`;
+
+    const totalArtists = S.ndArtists?.length || 0;
+    html += sectionHead('Artistas', { kicker: `${totalArtists} ${totalArtists === 1 ? 'artista' : 'artistas'}` });
+
+    if (!S.ndArtists?.length) {
+      html += emptyBlock('Nenhum artista na biblioteca.');
+    } else {
+      html += `<div class="artist-groups" id="artist-groups">`;
+      html += S.ndArtists.map(artistGroupBlock).join('');
+      html += `</div>`;
+      html += `<div id="lib-filter-empty" class="state" hidden><p>Nenhum artista encontrado.</p></div>`;
+    }
+  }
+
   el.innerHTML = html;
   if (!S.ndPlaylists) loadNdLibrary();
+  else if (tab === 'artists') {
+    bindLibFilter();
+    if (S.libFilter) filterArtistGroups(S.libFilter);
+  }
 }
 
 async function loadNdLibrary() {
@@ -1138,6 +1316,7 @@ async function loadNdLibrary() {
   S.ndLibLoading = true;
   const res = await guard(() => Promise.all([ND.getPlaylists(), ND.getAlbums('alphabeticalByName', 5000)]));
   [S.ndPlaylists, S.ndAlbums] = res || [[], []];
+  S.ndArtists = groupAlbumsByArtist(S.ndAlbums);
   S.ndLibLoading = false;
   if (S.view === 'library') renderLibrary();
 }
@@ -1232,6 +1411,12 @@ async function playMood(i) {
 function findCollection(id) {
   if (id === 'liked') return { title: 'Músicas curtidas', thumb: '' };
   if (id === 'starred') return { title: 'Favoritas', thumb: '' };
+  if (id.startsWith('artist:')) {
+    const name = decodeURIComponent(id.slice(7));
+    const artist = (S.ndArtists || []).find((a) => a.name.toLowerCase() === name.toLowerCase() || a.id === id);
+    if (artist) return { id, title: artist.name, thumb: artist.thumb, artist };
+    return { id, title: name, thumb: '' };
+  }
   return [
     ...(S.playlists || []), ...(S.recs?.playlists || []), ...(S.moodPlaylists || []),
     ...(S.ndRecent || []), ...(S.ndPlaylists || []), ...(S.ndAlbums || []), ...(S.ndFound || []),
@@ -1239,7 +1424,14 @@ function findCollection(id) {
 }
 
 function loadTracks(id) {
-  if (ND_MODE) return ND.getTracks(id);
+  if (ND_MODE) {
+    if (id.startsWith('artist:')) {
+      const name = decodeURIComponent(id.slice(7));
+      const artist = (S.ndArtists || []).find((a) => a.name.toLowerCase() === name.toLowerCase() || a.id === id);
+      return ND.getArtistTracks(name, artist?.albums || []);
+    }
+    return ND.getTracks(id);
+  }
   return id === 'liked' ? YT.getLiked() : YT.getPlaylistTracks(id);
 }
 
@@ -1249,12 +1441,15 @@ async function openPlaylist(id) {
   const el = $('#view-playlist');
   el.dataset.id = id;
   const key = `pl:${id}`;
+  const isArtist = id.startsWith('artist:');
+  const artist = meta.artist;
 
   const head = (tracks) => `<div class="pl-head">
-    <div class="pl-cover">${meta.thumb ? `<img src="${esc(meta.thumb)}" alt="">` : icon({ liked: 'heart', starred: 'star' }[id] || 'queue')}</div>
+    <div class="pl-cover ${isArtist ? 'is-artist' : ''}">${meta.thumb ? `<img src="${esc(meta.thumb)}" alt="">` : icon({ liked: 'heart', starred: 'star' }[id] || (isArtist ? 'now' : 'queue'))}</div>
     <div class="pl-info">
+      ${isArtist ? '<p class="kicker">Artista</p>' : ''}
       <h2>${esc(meta.title)}</h2>
-      <p class="muted">${tracks ? `${tracks.length} músicas` : 'Carregando…'}</p>
+      <p class="muted">${tracks ? `${tracks.length} músicas${isArtist && artist?.albums?.length ? ` • ${artist.albums.length} ${artist.albums.length === 1 ? 'álbum' : 'álbuns'}` : ''}` : 'Carregando…'}</p>
       <div class="pl-actions">
         <button class="btn btn-primary btn-lg" data-action="play-list" data-list="${key}" ${tracks?.length ? '' : 'disabled'}>${icon('play')}Tocar</button>
         <button class="btn btn-lg" data-action="shuffle-list" data-list="${key}" ${tracks?.length ? '' : 'disabled'}>${icon('shuffle')}Aleatório</button>
@@ -1274,7 +1469,18 @@ async function openPlaylist(id) {
     ? `<p class="pl-note">${tracks.hidden} ${tracks.hidden === 1 ? 'vídeo que não é música foi ocultado' : 'vídeos que não são música foram ocultados'}.</p>`
     : '';
   const empty = tracks.hidden ? 'Nenhuma música nesta playlist (só vídeos de outros tipos).' : 'Playlist vazia.';
-  el.innerHTML = head(tracks) + note + (tracks.length ? trackRows(tracks, key) : emptyBlock(empty));
+  const albumsSection = isArtist && artist?.albums?.length > 1 ? `
+    <div class="pl-section-head">
+      <h3>Álbuns (${artist.albums.length})</h3>
+    </div>
+    <div class="row-scroll artist-detail-albums">
+      ${artist.albums.map(playlistCard).join('')}
+    </div>
+    <div class="pl-section-head">
+      <h3>Todas as músicas</h3>
+    </div>
+  ` : '';
+  el.innerHTML = head(tracks) + albumsSection + note + (tracks.length ? trackRows(tracks, key) : emptyBlock(empty));
 }
 
 function renderMusicToggle() {

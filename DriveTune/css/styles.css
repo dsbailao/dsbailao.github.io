@@ -406,6 +406,176 @@ code {
 .pl-info p { margin: 0 0 1rem; }
 .pl-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; }
 
+/* ---------- biblioteca e grupos por artista ---------- */
+.lib-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+}
+.lib-tabs {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.lib-chip {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.lib-chip.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: transparent;
+}
+.lib-filter-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  min-height: 2.8rem;
+  flex: 1;
+  max-width: 22rem;
+}
+.lib-filter-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+}
+.lib-filter-wrap input::placeholder {
+  color: var(--text-3);
+}
+.lib-filter-ic {
+  width: 1.2rem;
+  height: 1.2rem;
+  color: var(--text-3);
+  flex: none;
+}
+.icon-btn-sm {
+  width: 2rem;
+  height: 2rem;
+}
+.icon-btn-sm .ic {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.artist-group {
+  margin-bottom: 2rem;
+}
+.artist-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+.artist-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-width: 0;
+  transition: transform 0.1s;
+}
+.artist-info-btn:active {
+  transform: scale(0.98);
+}
+.artist-avatar {
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-3);
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.artist-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.artist-avatar .ic {
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--text-2);
+}
+.artist-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.15rem;
+}
+.artist-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+.artist-count {
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+.artist-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+}
+.artist-group-actions .btn {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.artist-group-actions .btn:hover {
+  background: var(--surface-3);
+}
+
+.pl-cover.is-artist {
+  border-radius: 50%;
+}
+.pl-section-head {
+  margin: 1.5rem 0 0.8rem;
+}
+.pl-section-head h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 750;
+  color: var(--text);
+}
+.artist-detail-albums {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 48rem) {
+  .lib-toolbar { flex-direction: column; align-items: stretch; }
+  .lib-filter-wrap { max-width: 100%; }
+}
+@media (max-width: 40rem) {
+  .artist-group-actions .btn span { display: none; }
+  .artist-group-actions .btn { padding: 0 0.75rem; }
+}
+
 /* ---------- busca ---------- */
 .search-wrap { position: sticky; top: 0; z-index: 3; margin-bottom: 1rem; }
 .searchbar {

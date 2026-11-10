@@ -80,11 +80,16 @@ function toTrack(s, c) {
 
 // Álbuns e playlists usam o mesmo card das playlists do YouTube (`reason` é a linha de baixo).
 function toAlbum(a, c) {
+  const artist = a.displayArtist || a.artist || 'Artista desconhecido';
   return {
     id: `album:${a.id}`,
+    albumId: a.id,
     title: a.name || a.title || 'Álbum',
-    reason: a.displayArtist || a.artist || '',
+    artist,
+    artistId: a.artistId || '',
+    reason: artist,
     count: a.songCount || 0,
+    year: a.year || 0,
     thumb: cover(a.coverArt, c),
   };
 }
@@ -162,13 +167,38 @@ export async function artistSongs(name, max = 40) {
   return (r.song || []).filter((s) => (s.artist || '').toLowerCase().includes(key)).map((s) => toTrack(s, c));
 }
 
-// Coleções: "starred", "album:<id>" ou "pl:<id>".
+// Retorna todas as músicas de um artista (através dos seus álbuns ou da busca).
+export async function getArtistTracks(artistName, albums = []) {
+  const c = creds();
+  if (albums?.length) {
+    const lists = await Promise.all(
+      albums.map(async (alb) => {
+        try {
+          const sep = alb.id.indexOf(':');
+          const key = sep >= 0 ? alb.id.slice(sep + 1) : alb.id;
+          const res = await call('getAlbum', { id: key });
+          return (res.album?.song || []).map((s) => toTrack(s, c));
+        } catch {
+          return [];
+        }
+      })
+    );
+    const flattened = lists.flat();
+    if (flattened.length) return flattened;
+  }
+  return artistSongs(artistName, 100);
+}
+
+// Coleções: "starred", "album:<id>", "artist:<nome>" ou "pl:<id>".
 export async function getTracks(id) {
   if (id === 'starred') return getStarred();
   const c = creds();
   const sep = id.indexOf(':');
   const kind = id.slice(0, sep);
   const key = id.slice(sep + 1);
+  if (kind === 'artist') {
+    return artistSongs(decodeURIComponent(key), 100);
+  }
   const songs = kind === 'album'
     ? (await call('getAlbum', { id: key })).album?.song
     : (await call('getPlaylist', { id: key })).playlist?.entry;
